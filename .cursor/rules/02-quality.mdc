@@ -24,6 +24,12 @@ alwaysApply: true
 - [ ] 相關測試已執行且通過
 - [ ] 新行為有對應測試（若專案慣例要求 TDD）
 
+## smart_think 檢查
+
+- [ ] 🔴 任務：THINK 與 REVIEW 皆已呼叫 smart_think？
+- [ ] 🟡 任務：若命中觸發條件，已呼叫 smart_think？
+- [ ] `/think` 或使用者要求分析時，已呼叫 smart_think？
+
 ## 🟡🔴 TodoWrite 檢查
 
 - [ ] 所有子任務已標記 `completed`（或合理 `cancelled`）

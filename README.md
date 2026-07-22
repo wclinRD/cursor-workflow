@@ -39,11 +39,7 @@ brew install node  # Smart MCP 需要（如尚未安裝）
 
 ### 5. 設定 Smart MCP
 
-Cursor Settings → MCP → Add new MCP server：
-
-- **Name**: `smart`（或 `user-smart`，依環境而定）
-- **Type**: command
-- **Command**: 依你的 Smart MCP 安裝方式設定
+Cursor Settings → MCP → Add new MCP server（依你的 Smart MCP 安裝方式設定）。
 
 測試：請用 `smart_think` 分析 "Hello World"
 
@@ -52,8 +48,6 @@ Cursor Settings → MCP → Add new MCP server：
 ```
 /plan 實作使用者登入功能
 ```
-
-或直接描述任務；Agent 會依複雜度自動路由。
 
 ---
 
@@ -64,47 +58,34 @@ Cursor Settings → MCP → Add new MCP server：
 | 日常讀寫搜尋 | Cursor built-ins（Read、Grep、StrReplace、Shell） |
 | 深度分析 / 架構 | Smart MCP（smart_think、smart_deep_think、smart_run） |
 | 任務追蹤 | **TodoWrite**（原生） |
-| Stop Hook 信號 | `workflow-status.md`（僅 ALL_DONE 等狀態，非任務清單） |
+| Stop Hook 信號 | `workflow-status.md`（僅 🔴 任務） |
 | 複雜度 | 🟢 直接做 / 🟡 標準流程 / 🔴 完整迴圈 |
 
 ---
 
-## 目錄結構
+## smart_think 規則
 
-```
-.cursor/
-├── rules/
-│   ├── smart-mcp.mdc           # Smart MCP 使用邊界
-│   ├── 00-complexity.mdc       # 🟢🟡🔴 路由
-│   ├── 01-workflow-hybrid.mdc  # 標準 / 完整流程
-│   └── 02-quality.mdc          # 交付檢查
-├── commands/
-│   ├── think.md                # /think
-│   ├── plan.md                 # /plan
-│   └── review.md               # /review
-├── hooks/
-│   ├── hooks.json
-│   └── check-progress.ts       # Stop Hook（🔴 迭代，最多 3 輪）
-├── workflow-status.md          # Stop Hook 信號檔
-└── plans/                      # Plan Mode 計畫
-```
+| 複雜度 | 規則 |
+|--------|------|
+| 🟢 | **不用** |
+| 🟡 | 符合觸發條件時 **必須**（見下） |
+| 🔴 | THINK 與 REVIEW 階段 **必須** |
+| `/think` | **強制** |
+
+### 🟡 觸發條件（任一命中即必須 smart_think）
+
+1. 需求模糊、有多種做法或 trade-off
+2. 跨 3+ 檔案或模組邊界
+3. Bug 根因不明
+4. 架構 / API 設計取捨
+5. 使用者要求分析
+6. 第一次嘗試失敗、需重新拆解
+
+**未命中** → inline 簡短分析即可（例：步驟明確的 CRUD、單檔加函式）。
 
 ---
 
-## 工作流程
-
-```
-收到任務 → 複雜度評分
-    ↓
-🟢 簡單 → 直接執行
-🟡 中等 → 分析 → TodoWrite → 實作 → 驗證 → REVIEW
-🔴 複雜 → THINK → TodoWrite → [TDD] → 實作 → 驗證 → REVIEW
-                                              ↓
-                              workflow-status: ALL_DONE / NEED_REVISION
-                              Stop Hook 自動迭代（最多 3 輪）
-```
-
-### 複雜度評分
+## 複雜度評分
 
 ```
 分數 = 步驟×2 + 工具×2 + 檔案×1 + 風險×3
@@ -113,9 +94,26 @@ Cursor Settings → MCP → Add new MCP server：
 
 ---
 
+## 目錄結構
+
+```
+.cursor/
+├── rules/
+│   ├── smart-mcp.mdc
+│   ├── 00-complexity.mdc
+│   ├── 01-workflow-hybrid.mdc
+│   └── 02-quality.mdc
+├── commands/          → /think、/plan、/review
+├── hooks/             → Stop Hook（🔴 迭代，最多 3 輪）
+├── workflow-status.md
+└── plans/
+```
+
+---
+
 ## workflow-status.md
 
-僅供 Stop Hook 讀取，**不是**任務清單。任務進度以 **TodoWrite** 為準。
+僅供 Stop Hook 讀取（**不是**任務清單）。任務進度以 **TodoWrite** 為準。
 
 | 值 | 意義 |
 |----|------|
@@ -130,56 +128,29 @@ Cursor Settings → MCP → Add new MCP server：
 
 | 指令 | 用途 |
 |------|------|
-| `/think` | 強制結構化分析 |
-| `/plan` | TodoWrite 建立計畫 |
-| `/review` | 審查並更新 workflow-status |
-
----
-
-## 自訂設定
-
-### 修改迭代上限
-
-編輯 `.cursor/hooks/check-progress.ts`：
-
-```typescript
-const MAX_ITERATIONS = 3;
-```
-
-### 新增自訂指令
-
-在 `.cursor/commands/` 新增 `.md` 檔案即可。
+| `/think` | 強制 smart_think |
+| `/plan` | 分析 + TodoWrite 計畫 |
+| `/review` | smart_think 審查 + 更新 workflow-status |
 
 ---
 
 ## 常見問題
 
-**Q: Stop Hook 沒有觸發？**  
-A: 確認已安裝 Bun，且 `hooks.json` 在專案或全域 `.cursor/hooks/` 下。
+**Q: 🟡 什麼時候要 smart_think？**  
+A: 見上方觸發條件；步驟明確的任務不必。
 
-**Q: Smart MCP 工具找不到？**  
-A: 確認 Cursor Settings → MCP 已加入 Smart server。
+**Q: Stop Hook 沒觸發？**  
+A: 確認已安裝 Bun；🔴 任務需設 `workflow-status` 為 `IN_PROGRESS`。
 
 **Q: 迴圈停不下來？**  
-A: 🔴 任務完成後將 `workflow-status.md` 設為 `ALL_DONE`。
-
-**Q: 與舊版 scratchpad 版有何不同？**  
-A: 任務追蹤改為 Cursor 原生 TodoWrite；Stop Hook 改讀 `workflow-status.md`。
+A: 🔴 完成後設 `ALL_DONE`。
 
 ---
 
 ## 與 OpenCode 對比
 
-| 能力 | OpenCode | Cursor + 本工作流 |
-|------|----------|-------------------|
-| 結構化思考 | smart_think（內建） | smart_think（MCP） |
-| 任務追蹤 | todowrite（內建） | TodoWrite（原生） |
-| 迭代迴圈 | Agent 內建 | Stop Hook + workflow-status |
-| 複雜度路由 | 🟢🟡🔴 自動 | Rules 定義 |
+| 能力 | OpenCode | 本工作流 |
+|------|----------|----------|
+| 結構化思考 | smart_think（內建） | 🟢 不用 / 🟡 條件 / 🔴 必須 |
+| 任務追蹤 | todowrite | TodoWrite（原生） |
 | 日常工具 | 混合 | Cursor built-ins 優先 |
-
----
-
-## License
-
-MIT（或依專案需要自行添加）

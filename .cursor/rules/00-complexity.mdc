@@ -19,9 +19,18 @@ alwaysApply: true
 
 風險：低=1、中=2、高=3（認證、金流、schema 變更等）
 
+## smart_think 使用規則
+
+| 複雜度 | smart_think |
+|--------|-------------|
+| 🟢 | **不用** |
+| 🟡 | **符合觸發條件才用**（見 `01-workflow-hybrid.mdc`） |
+| 🔴 | **必須**（THINK 與 REVIEW 階段） |
+| `/think` | **強制** |
+
 ## 🟢 簡單（≤ 3 分）
 
-- 直接執行，**跳過** TodoWrite 與完整 THINK/REVIEW 迴圈
+- 直接執行，**跳過** TodoWrite、smart_think 與完整 REVIEW 迴圈
 - 用 Read / Grep / StrReplace 即可
 - 不必寫測試（除非使用者明確要求）
 - 範例：改 typo、重命名、解釋一段 code、小參數調整
@@ -31,21 +40,21 @@ alwaysApply: true
 - 執行 **標準流程**：分析 → 規劃 → 實作 → 驗證
 - 用 **TodoWrite** 追蹤子任務；同時只有一項 `in_progress`
 - 涉及新行為時遵循 TDD（先寫測試再實作）
-- 複雜分析可用 `smart_think`；架構影響用 `smart_deep_think`
+- **smart_think**：不強制；符合觸發條件時必須呼叫（見 workflow 規則）
 - 範例：新增 API、模組重構、跨 2-3 檔案的 bug
 
 ## 🔴 複雜（> 8 分）
 
 - 執行 **完整 Hybrid 迴圈**（見 `01-workflow-hybrid.mdc`）
 - **必須** 用 **TodoWrite** 追蹤所有子任務
+- **必須** 在 THINK 用 `smart_think` 或 `smart_deep_think`；REVIEW 至少用 `smart_think`
 - 開始時將 `.cursor/workflow-status.md` 設為 `IN_PROGRESS`（供 Stop Hook）
 - 建議 `/plan` 或 Shift+Tab Plan Mode 先出計畫
-- REVIEW 階段用 `smart_deep_think` 或 `smart_think`
 - 完成後寫入 `ALL_DONE`；需修正則寫 `NEED_REVISION`
 - 範例：大重構、多模組新功能、難以重現的 debug
 
 ## 動態調整
 
 - 執行中發現比預期簡單 → 降級，取消多餘 TodoWrite 項
-- 執行中發現比預期複雜 → 升級，建立 TodoWrite 並走完整流程
+- 執行中發現比預期複雜 → 升級，**補跑 smart_think**，建立 TodoWrite 並走 🔴 流程
 - 純問答、讀 repo、寫文件 → 一律視為 🟢，除非使用者要求完整流程
