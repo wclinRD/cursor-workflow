@@ -1,0 +1,99 @@
+---
+description: 主工作流規則，強制執行 THINK → PLAN → EXECUTE → REVIEW 迴圈
+alwaysApply: true
+---
+
+# 主工作流規則（強制執行）
+
+> 此規則適用於所有對話，不可跳過
+
+---
+
+## 🔄 Smart Hybrid 迴圈
+
+收到任何任務後，必須執行以下流程：
+
+### Phase 1: THINK
+- 使用 `smart_think` 進行結構化分析
+- 判斷複雜度（🟢/🟡/🔴）
+- 拆解子任務
+- 輸出分析結果
+
+### Phase 2: PLAN
+- 將子任務寫入 `.cursor/scratchpad.md`
+- 每個子任務標記狀態（pending/in_progress/completed/blocked）
+- 同時只有一個 in_progress
+
+### Phase 3: WRITE TESTS（TDD）
+- 先寫測試，定義預期行為
+- 測試應該明確規範功能行為
+- 執行測試確認失敗（RED）
+
+### Phase 4: IMPLEMENT
+- 逐項處理子任務
+- 每完成一項就更新 scratchpad.md
+- 用 smart_* 工具執行具體操作
+- 執行測試確認通過（GREEN）
+
+### Phase 5: VERIFY
+- 執行所有測試
+- 確認測試全部通過
+- 檢查覆蓋率
+
+### Phase 6: REVIEW
+- 使用 `smart_think` 驗證所有步驟
+- 檢查是否有遺漏或問題
+- 不完善 → 回到 Phase 1（最多 3 輪）
+- 完善 → 寫入 ALL_DONE
+
+---
+
+## ⚠️ 強制規則
+
+1. **不可跳過 THINK**：任何任務都必須先分析再動手
+2. **先寫測試**：實作功能前先寫測試（TDD 原則）
+3. **一次一項**：同時只有一個 in_progress
+4. **即時更新**：每完成一項就更新 scratchpad.md
+5. **迭代上限**：最多 3 輪，超過則停止並報告
+6. **先讀後改**：用 smart_read 了解現狀，再用 smart_fast_apply 修改
+
+---
+
+## 📁 檔案位置
+
+- 任務追蹤：`.cursor/scratchpad.md`
+- 歷史記錄：`.cursor/todo.md`
+- 計畫儲存：`.cursor/plans/`
+
+---
+
+## 🔧 工具使用順序
+
+```
+1. smart_think — 結構化分析
+2. smart_read — 讀取相關檔案
+3. smart_grep — 搜尋程式碼
+4. smart_fast_apply — 編輯檔案
+5. smart_test — 執行測試（TDD 流程）
+6. smart_think — 最終驗證
+```
+
+---
+
+## 📝 Context 管理
+
+### 何時開始新對話
+- 切換到不同任務或功能時
+- Agent 似乎困惑或重複犯錯時
+- 完成一個邏輯工作單元時
+- Context 使用率超過 70% 時
+
+### 何時繼續對話
+- 在同一功能上迭代時
+- Agent 需要之前討論的 context 時
+- 正在除錯剛建立的功能時
+
+### 使用 Cursor 原生功能
+- **Plan Mode**：按 `Shift+Tab` 切換，Agent 會先研究 codebase、問問題、建立計畫
+- **@Branch**：「Review the changes on this branch」或「What am I working on?」
+- **Save to workspace**：儲存計畫到 `.cursor/plans/`
