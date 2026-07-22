@@ -1,46 +1,31 @@
-# /review — 審查結果
+# /review — 審查實施結果
 
-審查目前的實施結果：
+審查目前進度與交付品質：
 
 $ARGUMENTS
 
 ## 流程
 
-### Step 1: 讀取 scratchpad.md
-使用 smart_read 讀取 `.cursor/scratchpad.md`，了解目前進度。
+### 1. 檢查 TodoWrite
+- 所有子任務是否 `completed`？
+- 是否有遺留 `pending` / `in_progress`？
+- 必要時 Read git diff 核對改動
 
-### Step 2: 檢查完成項目
-確認所有子任務都標記為 completed。
+### 2. 驗證
+- Shell 執行相關測試
+- 🔴 任務：用 `smart_think` 或 `smart_deep_think` 做完整性檢查
 
-### Step 3: 驗證完整性
-使用 smart_think 進行驗證：
-
-```
-smart_think({
-  thought: "檢查所有完成的任務...",
-  nextThoughtNeeded: false,
-  mode: "cit"
-})
-```
-
-### Step 4: 輸出審查報告
+### 3. 輸出報告
 ```markdown
 ## 審查報告
-
 ### 完成項目
-1. [項目1] — ✅ 已完成
-2. [項目2] — ✅ 已完成
-
-### 遺漏項目
-- [如有遺漏]
-
-### 問題記錄
-- [如有問題]
-
+### 遺漏 / 問題
 ### 建議
-- [改進建議]
 ```
 
-### Step 5: 更新 scratchpad.md
-- 如果通過：寫入 `ALL_DONE`
-- 如果有問題：寫入 `NEED_REVISION` + 原因
+### 4. 更新 workflow-status（🔴 任務）
+寫入 `.cursor/workflow-status.md`：
+- 通過：`ALL_DONE`
+- 需修正：`NEED_REVISION: [原因]`
+
+Stop Hook 會讀取此檔決定是否自動進入下一輪迭代。

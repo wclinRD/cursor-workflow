@@ -1,48 +1,34 @@
-# /think — 結構化思考
+# /think — 結構化分析
 
-使用 smart_think 對以下任務進行結構化分析：
+對以下任務做結構化分析（不論複雜度，強制走 THINK 階段）：
 
 $ARGUMENTS
 
 ## 流程
 
-### Step 1: 判斷複雜度
-使用評分公式：
+### 1. 評分
 ```
 分數 = 步驟×2 + 工具×2 + 檔案×1 + 風險×3
-
-≤ 3  → 🟢 簡單
-4-8  → 🟡 中等
-> 8  → 🔴 複雜
+≤3 🟢 | 4-8 🟡 | >8 🔴
 ```
 
-### Step 2: 結構化分析
-使用 smart_think structured 模式：
+### 2. 分析工具
+- 🟢🟡：可 inline 分析，或 `smart_think`
+- 🔴：用 `smart_think`（structured）或 `smart_deep_think`
 
-```
-smart_think({
-  thought: "分析任務...",
-  nextThoughtNeeded: true,
-  mode: "structured",
-  goal: "任務目標",
-  state: "已知資訊",
-  algo: "推理路徑",
-  edge: "限制條件",
-  verify: "驗證邏輯"
-})
-```
-
-### Step 3: 輸出格式
+### 3. 輸出
 ```markdown
 ## 任務分析
-- **目標**：[一句話描述]
+- **目標**：
 - **複雜度**：🟢/🟡/🔴
 - **步驟**：
-  1. [步驟1] — 工具：smart_xxx
-  2. [步驟2] — 工具：smart_xxx
-- **風險**：[低/中/高]
-- **預估**：[時間/次數]
+  1. … — 工具：Read/Grep/Shell/smart_*
+- **風險**：
 ```
 
-### Step 4: 寫入 scratchpad.md
-將分析結果寫入 `.cursor/scratchpad.md`，等待確認後開始執行。
+### 4. 後續
+- 🟢：直接執行
+- 🟡🔴：**TodoWrite** 建立子任務後開始
+- 🔴：另將 `.cursor/workflow-status.md` 設為 `IN_PROGRESS`
+
+遵循 `smart-mcp.mdc`：日常讀寫用 Cursor built-ins。

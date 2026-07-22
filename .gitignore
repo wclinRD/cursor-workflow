@@ -1,25 +1,5 @@
-# Backup files
-*.apply.bak
-*.bak
-
-# OS files
 .DS_Store
-
-# Editor files
-*.swp
-*.swo
-*~
-
-# Node modules
 node_modules/
-
-# Build outputs
-dist/
-build/
-
-# Logs
-*.log
-
-# Environment variables
 .env
-.env.local
+.env.*
+*.log

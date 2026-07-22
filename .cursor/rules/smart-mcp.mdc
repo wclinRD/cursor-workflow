@@ -1,0 +1,43 @@
+---
+description: When to use Smart MCP tools in Cursor (avoid overlap with built-ins)
+alwaysApply: true
+---
+
+# Smart MCP in Cursor
+
+Smart MCP is available as the `smart` MCP server. Prefer Cursor built-ins for everyday edits; use Smart only for its unique strengths.
+
+## Prefer Cursor built-ins (do NOT use Smart equivalents)
+
+| Task | Use | Avoid |
+|------|-----|-------|
+| Search code | Grep | `smart_grep` |
+| Find files | Glob | `smart_glob` |
+| Read files | Read | `smart_read` |
+| Edit files | StrReplace / Write | `smart_fast_apply` |
+| Run tests / shell | Shell | `smart_test` |
+
+## Use Smart MCP for these
+
+| Task | Tool |
+|------|------|
+| Crawl / extract web pages | `smart_exa_crawl` |
+| Web search (token-efficient) | `smart_exa_search` |
+| Search GitHub code | `smart_github_search` |
+| Security scan | `smart_security` |
+| Project onboarding overview | `smart_learn` |
+| LSP definition / refs / hover | `smart_lsp` |
+| Deep structured analysis | `smart_deep_think` / `smart_think` |
+| Architecture / import graph / call graph / impact | `smart_run` → `arch_overview`, `import_graph`, `code_call_graph`, `code_impact` |
+| Ingest PDF/DOCX | `smart_run` → `ingest_document` |
+| Diagnose errors against KB | `smart_run` → `error_diagnose` |
+| Full research pipeline | `smart_run` → `research` |
+
+## Router usage
+
+```
+smart_run({ tool: "arch_overview", args: { root: "." } })
+smart_run({ tool: "help", args: {} })
+```
+
+If unsure which sub-tool: `smart_run({ tool: "hybrid_router", args: { question: "..." } })`.

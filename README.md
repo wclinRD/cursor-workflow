@@ -1,201 +1,185 @@
-# Cursor Smart Hybrid Agent Setup
+# Cursor Smart Hybrid Workflow
 
-> 將 OpenCode Smart Hybrid Agent 的工作流移植到 Cursor + Smart MCP
+> 將 OpenCode Smart Hybrid Agent 工作流移植到 Cursor，**貼近 Cursor 原生工具**（TodoWrite、Read、Grep、StrReplace），Smart MCP 用於深度分析。
 
 ---
 
-## 🚀 快速開始
+## 快速開始
 
-### 1. 選擇安裝類型
+### 1. 選擇安裝範圍
 
-| 類型 | 影響範圍 | 路徑 |
+| 類型 | 影響範圍 | 做法 |
 |------|---------|------|
-| **Cursor by Jobs** | 僅該專案 | `YOUR_PROJECT/.cursor/` |
-| **Cursor Global** | 所有專案 | `~/.cursor/` |
+| **專案級** | 僅該專案 | 複製 `.cursor/` 到專案根目錄 |
+| **全域** | 所有專案 | 複製 `rules/`、`hooks/`、`commands/` 到 `~/.cursor/` |
 
----
-
-### 2. 複製設定檔案
-
-#### 選項 A：Cursor by Jobs（僅該專案）
+### 2. 安裝（專案級）
 
 ```bash
-# 進入你的專案目錄
+git clone https://github.com/wclinRD/cursor-workflow.git /tmp/cursor-workflow
 cd YOUR_PROJECT
-
-# 複製 .cursor 目錄到專案
-cp -r /Users/wclin/opencode/day/cursor/.cursor/ .cursor/
-
-# 複製說明文件（選擇性）
-cp /Users/wclin/opencode/day/cursor/cursor_plan.md .
-cp /Users/wclin/opencode/day/cursor/cursor_todo.md .
+cp -r /tmp/cursor-workflow/.cursor .
 ```
 
-#### 選項 B：Cursor Global（所有專案）
+### 3. 安裝（全域）
 
 ```bash
-# 複製 rules 到 global 設定
-cp -r /Users/wclin/opencode/day/cursor/.cursor/rules/ ~/.cursor/rules/
-
-# 複製 hooks 到 global 設定
-cp -r /Users/wclin/opencode/day/cursor/.cursor/hooks/ ~/.cursor/hooks/
-
-# 複製 commands 到 global 設定
-cp -r /Users/wclin/opencode/day/cursor/.cursor/commands/ ~/.cursor/commands/
+git clone https://github.com/wclinRD/cursor-workflow.git /tmp/cursor-workflow
+cp -r /tmp/cursor-workflow/.cursor/rules/ ~/.cursor/rules/
+cp -r /tmp/cursor-workflow/.cursor/hooks/ ~/.cursor/hooks/
+cp -r /tmp/cursor-workflow/.cursor/commands/ ~/.cursor/commands/
 ```
 
-### 3. 安裝依賴
+### 4. 依賴
 
 ```bash
-# 安裝 Bun（Stop Hook 需要）
-brew install bun
-
-# 安裝 Node.js（如尚未安裝）
-brew install node
+brew install bun   # Stop Hook 需要
+brew install node  # Smart MCP 需要（如尚未安裝）
 ```
 
-### 4. 設定 Smart MCP
+### 5. 設定 Smart MCP
 
-1. 開啟 Cursor Settings（`Cmd + ,`）
-2. 左側選單找到 **MCP**
-3. 點擊 **Add new MCP server**
-4. 填入：
-   - **Name**: `smart-mcp`
-   - **Type**: `command`
-   - **Command**: `npx -y @anthropic-ai/mcp-server-smart`
-5. 點擊 **Save**
-6. 重啟 Cursor
+Cursor Settings → MCP → Add new MCP server：
 
-測試 Smart MCP 是否安裝成功：
-```
-請用 smart_think 分析 "Hello World"
-```
+- **Name**: `smart`（或 `user-smart`，依環境而定）
+- **Type**: command
+- **Command**: 依你的 Smart MCP 安裝方式設定
 
-### 5. 啟用 Skills（選擇性）
-
-Cursor Settings → Beta → Update Channel → Nightly
+測試：請用 `smart_think` 分析 "Hello World"
 
 ### 6. 開始使用
 
 ```
-/think 實作使用者登入功能
+/plan 實作使用者登入功能
 ```
 
-或直接輸入任務，Agent 會自動執行 think → plan → execute → review 迴圈。
+或直接描述任務；Agent 會依複雜度自動路由。
 
 ---
 
-## 📁 檔案說明
+## 設計原則
 
-| 檔案 | 用途 |
+| 項目 | 做法 |
 |------|------|
-| `.cursor/rules/00-workflow.mdc` | 主工作流規則（強制，alwaysApply） |
-| `.cursor/rules/01-smart-tools.mdc` | Smart MCP 工具規則（自動觸發） |
-| `.cursor/rules/02-complexity.mdc` | 複雜度路由規則（alwaysApply） |
-| `.cursor/rules/03-quality.mdc` | 品質檢查規則（alwaysApply） |
-| `.cursor/hooks/hooks.json` | Stop hook 配置 |
-| `.cursor/hooks/check-progress.ts` | 迭代檢查腳本 |
-| `.cursor/commands/think.md` | /think 指令 |
-| `.cursor/commands/plan.md` | /plan 指令 |
-| `.cursor/commands/review.md` | /review 指令 |
-| `.cursor/scratchpad.md` | 任務追蹤面板 |
-| `.cursor/todo.md` | 歷史任務記錄 |
-| `cursor_plan.md` | 完整工作流說明 |
-| `cursor_todo.md` | 任務追蹤模板 |
+| 日常讀寫搜尋 | Cursor built-ins（Read、Grep、StrReplace、Shell） |
+| 深度分析 / 架構 | Smart MCP（smart_think、smart_deep_think、smart_run） |
+| 任務追蹤 | **TodoWrite**（原生） |
+| Stop Hook 信號 | `workflow-status.md`（僅 ALL_DONE 等狀態，非任務清單） |
+| 複雜度 | 🟢 直接做 / 🟡 標準流程 / 🔴 完整迴圈 |
 
 ---
 
-## 🔄 工作流程
+## 目錄結構
 
 ```
-收到任務
-    ↓
-Phase 1: THINK（smart_think 拆解問題）
-    ↓
-Phase 2: PLAN（寫入 scratchpad.md）
-    ↓
-Phase 3: WRITE TESTS（先寫測試，TDD）
-    ↓
-Phase 4: IMPLEMENT（逐項處理）
-    ↓
-Phase 5: VERIFY（執行測試）
-    ↓
-Phase 6: REVIEW（smart_think 驗證）
-    ↓
-  ┌─ 通過 → ALL_DONE → 結束
-  └─ 不通過 → NEED_REVISION → 回到 Phase 1（最多 3 輪）
+.cursor/
+├── rules/
+│   ├── smart-mcp.mdc           # Smart MCP 使用邊界
+│   ├── 00-complexity.mdc       # 🟢🟡🔴 路由
+│   ├── 01-workflow-hybrid.mdc  # 標準 / 完整流程
+│   └── 02-quality.mdc          # 交付檢查
+├── commands/
+│   ├── think.md                # /think
+│   ├── plan.md                 # /plan
+│   └── review.md               # /review
+├── hooks/
+│   ├── hooks.json
+│   └── check-progress.ts       # Stop Hook（🔴 迭代，最多 3 輪）
+├── workflow-status.md          # Stop Hook 信號檔
+└── plans/                      # Plan Mode 計畫
 ```
 
 ---
 
-## ⚠️ 注意事項
+## 工作流程
 
-1. **Stop Hook 需要 Bun**：`brew install bun`
-2. **Skills 需要 Nightly Channel**：Settings → Beta → Nightly
-3. **Context 管理**：長對話後用 `smart_compact` 壓縮
-4. **迭代上限**：最多 3 輪，避免無限迴圈
-5. **檔案衝突**：多個 Cursor 視窗共用 scratchpad.md 可能衝突
-6. **TDD 原則**：先寫測試再寫程式碼（RED → GREEN → REFACTOR）
-7. **.mdc 格式**：Rules 使用 `.mdc` 格式，支援自動觸發
+```
+收到任務 → 複雜度評分
+    ↓
+🟢 簡單 → 直接執行
+🟡 中等 → 分析 → TodoWrite → 實作 → 驗證 → REVIEW
+🔴 複雜 → THINK → TodoWrite → [TDD] → 實作 → 驗證 → REVIEW
+                                              ↓
+                              workflow-status: ALL_DONE / NEED_REVISION
+                              Stop Hook 自動迭代（最多 3 輪）
+```
 
----
+### 複雜度評分
 
-## 📊 與 OpenCode 對比
-
-| 能力 | OpenCode | Cursor + Smart MCP |
-|------|----------|--------------------|
-| 結構化思考 | smart_think（內建） | smart_think（MCP） |
-| 任務追蹤 | todowrite（內建） | scratchpad.md（檔案） |
-| 規劃模式 | smart_think structured | Plan Mode + Rules |
-| 迭代迴圈 | Agent 內建 | stop hook + scratchpad |
-| 複雜度路由 | 🟢🟡🔴 自動 | Rules 定義 |
-| Subagent | 有 | 無（但有 Background Agents） |
-| Context 管理 | smart_context | smart_context（MCP） |
-
-**結論**：安裝 Smart MCP 後，Cursor 可以達到 OpenCode 85-90% 的效果。
+```
+分數 = 步驟×2 + 工具×2 + 檔案×1 + 風險×3
+≤3 🟢 | 4-8 🟡 | >8 🔴
+```
 
 ---
 
-## 🔧 自訂設定
+## workflow-status.md
+
+僅供 Stop Hook 讀取，**不是**任務清單。任務進度以 **TodoWrite** 為準。
+
+| 值 | 意義 |
+|----|------|
+| `IDLE` | 無進行中 🔴 任務 |
+| `IN_PROGRESS` | 🔴 任務進行中 |
+| `ALL_DONE` | 完成，Hook 停止 |
+| `NEED_REVISION: …` | 需修正，Hook 觸發下一輪 |
+
+---
+
+## 自訂指令
+
+| 指令 | 用途 |
+|------|------|
+| `/think` | 強制結構化分析 |
+| `/plan` | TodoWrite 建立計畫 |
+| `/review` | 審查並更新 workflow-status |
+
+---
+
+## 自訂設定
 
 ### 修改迭代上限
 
 編輯 `.cursor/hooks/check-progress.ts`：
 
 ```typescript
-const MAX_ITERATIONS = 3; // 修改這個數字
+const MAX_ITERATIONS = 3;
 ```
 
 ### 新增自訂指令
 
 在 `.cursor/commands/` 新增 `.md` 檔案即可。
 
-### 調整複雜度判斷
+---
 
-編輯 `.cursor/rules/02-complexity.mdc` 中的評分公式。
+## 常見問題
 
-### 使用 Plan Mode
+**Q: Stop Hook 沒有觸發？**  
+A: 確認已安裝 Bun，且 `hooks.json` 在專案或全域 `.cursor/hooks/` 下。
 
-按 `Shift+Tab` 切換 Plan Mode，Agent 會先研究 codebase、問問題、建立計畫。
+**Q: Smart MCP 工具找不到？**  
+A: 確認 Cursor Settings → MCP 已加入 Smart server。
 
-### 使用 @Branch
+**Q: 迴圈停不下來？**  
+A: 🔴 任務完成後將 `workflow-status.md` 設為 `ALL_DONE`。
 
-使用 `@Branch` 提供 branch context，例如：
-- 「Review the changes on this branch」
-- 「What am I working on?」
+**Q: 與舊版 scratchpad 版有何不同？**  
+A: 任務追蹤改為 Cursor 原生 TodoWrite；Stop Hook 改讀 `workflow-status.md`。
 
 ---
 
-## 🐛 常見問題
+## 與 OpenCode 對比
 
-### Q: Stop Hook 沒有觸發？
-A: 確認已安裝 Bun，且 hooks.json 格式正確。
+| 能力 | OpenCode | Cursor + 本工作流 |
+|------|----------|-------------------|
+| 結構化思考 | smart_think（內建） | smart_think（MCP） |
+| 任務追蹤 | todowrite（內建） | TodoWrite（原生） |
+| 迭代迴圈 | Agent 內建 | Stop Hook + workflow-status |
+| 複雜度路由 | 🟢🟡🔴 自動 | Rules 定義 |
+| 日常工具 | 混合 | Cursor built-ins 優先 |
 
-### Q: Smart MCP 工具找不到？
-A: 確認在 Cursor Settings → MCP 中已加入 Smart MCP server。
+---
 
-### Q: scratchpad.md 沒有更新？
-A: 確認 Agent 有遵循 Rules 中的工作流規則。
+## License
 
-### Q: 迴圈停不下來？
-A: 檢查 scratchpad.md 是否正確寫入 ALL_DONE 或 NEED_REVISION。
+MIT（或依專案需要自行添加）

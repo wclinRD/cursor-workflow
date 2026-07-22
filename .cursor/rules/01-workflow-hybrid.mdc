@@ -1,0 +1,73 @@
+---
+description: 🟡🔴 任務的 THINK → PLAN → EXECUTE → REVIEW 流程（🟢 可跳過）
+alwaysApply: true
+---
+
+# Hybrid 工作流
+
+> 僅在 🟡 中等與 🔴 複雜任務啟用完整迴圈。🟢 簡單任務直接完成即可。
+> 任務追蹤一律使用 Cursor 原生 **TodoWrite**。
+
+## 標準流程（🟡）
+
+```
+分析 → TodoWrite 規劃 → 實作 → 驗證 → 簡要 REVIEW
+```
+
+1. **分析**：釐清目標與限制；必要時用 `smart_think`
+2. **規劃**：**TodoWrite** 建立子任務；同時只有一項 `in_progress`
+3. **實作**：Read / Grep 先讀後改；StrReplace / Write 編輯；Shell 跑測試
+4. **驗證**：執行相關測試或手動確認
+5. **REVIEW**：確認 TodoWrite 全部 `completed`
+
+## 完整迴圈（🔴）
+
+```
+THINK → TodoWrite PLAN → [WRITE TESTS] → IMPLEMENT → VERIFY → REVIEW
+                                                              ↓
+                                              workflow-status: ALL_DONE / NEED_REVISION
+```
+
+### Phase 1: THINK
+- 用 `smart_think` 或 `smart_deep_think` 拆解問題
+- 判斷是否需 Plan Mode（Shift+Tab）
+
+### Phase 2: PLAN
+- **TodoWrite** 建立子任務（pending / in_progress / completed / cancelled）
+- 寫入 `.cursor/workflow-status.md` → `IN_PROGRESS`
+
+### Phase 3: WRITE TESTS（有測試框架且任務涉及新行為時）
+- 先寫失敗測試（RED）→ 實作（GREEN）→ 重構（REFACTOR）
+
+### Phase 4–5: IMPLEMENT & VERIFY
+- 一次一項 `in_progress`；每完成一項 **TodoWrite merge 更新**
+- Shell 執行測試
+
+### Phase 6: REVIEW
+- 確認 TodoWrite 全部 `completed`
+- 通過：`.cursor/workflow-status.md` → `ALL_DONE`
+- 不通過：→ `NEED_REVISION` + 原因（Stop Hook 觸發下一輪，最多 3 輪）
+
+## TodoWrite 使用規則
+
+- 至少 2 項子任務時才建立 todo list
+- 開始執行前：一項 `in_progress`，其餘 `pending`
+- 完成驗證後才標記 `completed`
+- 用 `merge: true` 更新狀態，不要重建整份 list
+
+## 手動觸發
+
+| 指令 | 用途 |
+|------|------|
+| `/think` | 強制結構化分析 |
+| `/plan` | TodoWrite 建立計畫 |
+| `/review` | 審查並更新 workflow-status |
+
+## 工具優先順序
+
+遵循 `smart-mcp.mdc`：日常用 Cursor built-ins；深度分析、架構、網搜用 Smart MCP。
+
+## Context 管理
+
+- 切換任務、Agent 混淆、完成一個功能單元 → 考慮新對話
+- 長對話可用 `smart_compact`（若可用）
