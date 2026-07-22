@@ -30,10 +30,12 @@ alwaysApply: true
 - [ ] 🟡 任務：若命中觸發條件，已呼叫 smart_think？
 - [ ] `/think` 或使用者要求分析時，已呼叫 smart_think？
 
-## 🟡🔴 TodoWrite 檢查
+## TodoWrite 檢查（強制）
 
-- [ ] 所有子任務已標記 `completed`（或合理 `cancelled`）
-- [ ] 無遺留 `in_progress` 或 `pending`
+- [ ] 有實作步驟的任務：開始前已建立 TodoWrite？
+- [ ] 所有子任務已 `completed` 或合理 `cancelled`？
+- [ ] 無遺留 `in_progress` / `pending`？
+- [ ] 每完成一項都有 `merge: true` 更新？
 
 ## 🔴 完整迴圈額外檢查
 
@@ -42,6 +44,6 @@ alwaysApply: true
 
 ## 常見問題
 
-- **跳過規劃直接改** → 🟡🔴 先用 TodoWrite
+- **跳過 TodoWrite 直接改** → 有實作步驟時**禁止**；先建 todo
 - **迭代停不下來** → 確認 workflow-status 為 `ALL_DONE`；或已達 3 輪上限
 - **Todo 狀態不同步** → 每完成一項立即 `merge: true` 更新

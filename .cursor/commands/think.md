@@ -37,8 +37,7 @@ smart_think({
 ```
 
 ### 4. 後續
-- 🟢：直接執行
-- 🟡🔴：**TodoWrite** 建立子任務後開始
+- 有實作：**TodoWrite 必須**（🟢 至少 1 項）
 - 🔴：`.cursor/workflow-status.md` → `IN_PROGRESS`
 
 日常讀寫用 Cursor built-ins（`smart-mcp.mdc`）。

@@ -5,13 +5,34 @@ alwaysApply: true
 
 # Hybrid 工作流
 
-> 僅在 🟡 中等與 🔴 複雜任務啟用完整迴圈。🟢 簡單任務直接完成即可。
-> 任務追蹤一律使用 Cursor 原生 **TodoWrite**。
+> 任務追蹤 **一律強制 TodoWrite**（純問答除外）。
+> smart_think 依複雜度與觸發條件決定（見下）。
+
+## TodoWrite（強制）
+
+### 何時必須建立
+- 任何涉及 **改 code、跑命令、多步驟實作** 的任務
+- `/plan`、`/think`（若後續要實作）、🟡、🔴 任務
+- **實作前** 建立，不可先改檔再補 todo
+
+### 何時可跳過
+- 純問答：解釋 code、回答問題、讀 repo 說明
+- 單句可完成的 🟢 且使用者未要求追蹤
+
+### 使用規則
+1. 建立後立即將第一項設為 `in_progress`
+2. **同時只有一項** `in_progress`
+3. 完成驗證後才標 `completed`
+4. 用 `merge: true` 更新，不要整份重建
+5. 任務結束前所有項須 `completed` 或 `cancelled`
+6. 🟢 至少 1 項；🟡🔴 依子任務拆分（通常 2+ 項）
+
+---
 
 ## smart_think 決策
 
 ### 🟢 — 不用
-直接 Read / Grep / StrReplace / Shell 完成。
+TodoWrite（若有實作）→ Read / Grep / StrReplace / Shell。
 
 ### 🟡 — 符合以下任一條件 **必須** 呼叫 `smart_think`
 
@@ -22,85 +43,52 @@ alwaysApply: true
 5. **使用者要求**：明確說「分析」「先想」「/think」
 6. **執行中卡關**：第一次嘗試失敗，需重新拆解
 
-**不符合以上** → inline 簡短分析（2–4 句）即可，**不必** smart_think。  
-例：步驟明確的 CRUD、單檔新增函式、照範例寫測試。
+**不符合以上** → inline 簡短分析即可。
 
 ### 🔴 — **必須** smart_think
 
 | 階段 | 工具 |
 |------|------|
 | THINK | `smart_think`（structured）或 `smart_deep_think` |
-| REVIEW | 至少 `smart_think`（cit）；高風險用 `smart_deep_think` |
+| REVIEW | 至少 `smart_think`；高風險用 `smart_deep_think` |
 
-開始 THINK **之前**不得直接改 code 或建 TodoWrite（🔴）。
+🔴 順序：**smart_think THINK → TodoWrite → 實作**（THINK 前不得改 code 或建 TodoWrite）。
 
 ---
 
 ## 標準流程（🟡）
 
 ```
-分析 [smart_think?] → TodoWrite → 實作 → 驗證 → REVIEW
+分析 [smart_think?] → TodoWrite（必須）→ 實作 → 驗證 → REVIEW
 ```
 
-1. **分析**：評估是否命中上方 🟡 觸發條件；命中則 `smart_think`
-2. **規劃**：**TodoWrite** 建立子任務；同時只有一項 `in_progress`
-3. **實作**：Read / Grep 先讀後改；StrReplace / Write；Shell 跑測試
-4. **驗證**：執行相關測試或手動確認
-5. **REVIEW**：確認 TodoWrite 全部 `completed`
+1. **分析**：評估 🟡 smart_think 觸發條件
+2. **TodoWrite**：**必須**建立子任務
+3. **實作**：逐項完成，每項完成即更新 todo
+4. **驗證**：Shell 測試或手動確認
+5. **REVIEW**：TodoWrite 全部 `completed`
 
 ## 完整迴圈（🔴）
 
 ```
-smart_think THINK → TodoWrite → [TDD] → IMPLEMENT → VERIFY → smart_think REVIEW
-                                                                    ↓
-                                                    workflow-status: ALL_DONE / NEED_REVISION
+smart_think → TodoWrite（必須）→ [TDD] → IMPLEMENT → VERIFY → smart_think REVIEW
 ```
 
-### Phase 1: THINK（必須 smart_think）
-```
-smart_think({
-  mode: "structured",
-  goal: "任務目標",
-  state: "已知資訊",
-  algo: "推理路徑",
-  edge: "限制條件",
-  verify: "驗證邏輯"
-})
-```
-- 多模組 / 高風險：改用 `smart_deep_think`
-- 判斷是否需 Plan Mode（Shift+Tab）
-
-### Phase 2: PLAN
-- **TodoWrite** 建立子任務
-- `.cursor/workflow-status.md` → `IN_PROGRESS`
-
-### Phase 3–5: TDD / IMPLEMENT / VERIFY
-- 有測試框架且涉及新行為：RED → GREEN → REFACTOR
-- 一次一項 `in_progress`；TodoWrite `merge: true` 更新
-- Shell 執行測試
-
-### Phase 6: REVIEW（必須 smart_think）
-- 確認 TodoWrite 全部 `completed`
-- `smart_think` 驗證完整性；高風險用 `smart_deep_think`
-- 通過 → `ALL_DONE`；不通過 → `NEED_REVISION`（Stop Hook 最多 3 輪）
-
-## TodoWrite 使用規則
-
-- 至少 2 項子任務時才建立 todo list
-- 開始執行前：一項 `in_progress`，其餘 `pending`
-- 完成驗證後才標記 `completed`
-- 用 `merge: true` 更新狀態，不要重建整份 list
+- TodoWrite 在 THINK 之後、實作之前 **必須** 建立
+- `workflow-status.md` → `IN_PROGRESS` / `ALL_DONE` / `NEED_REVISION`
+- Stop Hook 最多 3 輪
 
 ## 手動觸發
 
-| 指令 | 用途 |
-|------|------|
-| `/think` | 強制 smart_think（不論複雜度） |
-| `/plan` | smart_think（🔴）+ TodoWrite 計畫 |
-| `/review` | smart_think 審查 + 更新 workflow-status |
+| 指令 | TodoWrite | smart_think |
+|------|-----------|-------------|
+| `/think` | 若後續實作則必須 | 強制 |
+| `/plan` | **必須** | 🔴 必須；🟡 看觸發條件 |
+| `/review` | 檢查全部 completed | 🔴 必須 |
 
 ## 工具優先順序
 
+- **追蹤**：TodoWrite（強制）
 - **思考**：smart_think / smart_deep_think（依上表）
 - **讀寫搜尋測試**：Cursor built-ins（見 `smart-mcp.mdc`）
 

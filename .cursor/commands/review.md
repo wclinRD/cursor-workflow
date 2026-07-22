@@ -6,7 +6,8 @@ $ARGUMENTS
 
 ## 流程
 
-### 1. 檢查 TodoWrite
+### 1. 檢查 TodoWrite（必須）
+- 有實作步驟的任務是否已建立 TodoWrite？
 - 所有子任務是否 `completed`？
 - 是否有遺留 `pending` / `in_progress`？
 - 必要時 Read git diff 核對改動
