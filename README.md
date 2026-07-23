@@ -20,6 +20,8 @@ git clone https://github.com/wclinRD/cursor-workflow.git /tmp/cursor-workflow
 cd YOUR_PROJECT
 cp -r /tmp/cursor-workflow/.cursor .
 brew install bun   # Stop Hook 需要
+cp .cursor/workflow-status.template.md .cursor/workflow-status.md
+./scripts/verify-install.sh   # 驗證安裝與 Hook 測試
 ```
 
 安裝後重載 Cursor 視窗，讓 `.cursor/rules` 生效。
@@ -34,7 +36,8 @@ cp -r /tmp/cursor-workflow/.cursor/commands/ ~/.cursor/commands/
 brew install bun   # Stop Hook 需要
 ```
 
-> 全域安裝不含 `workflow-status.md`（各專案狀態獨立）。專案級安裝會一併複製。
+> 全域安裝不含 `workflow-status.md`（各專案狀態獨立）。在專案中執行：
+> `cp .cursor/workflow-status.template.md .cursor/workflow-status.md`
 
 ### 4. 更新既有專案
 
@@ -44,13 +47,24 @@ cd YOUR_PROJECT
 cp -r /tmp/cursor-workflow/.cursor/rules/ .cursor/rules/
 cp -r /tmp/cursor-workflow/.cursor/commands/ .cursor/commands/
 cp -r /tmp/cursor-workflow/.cursor/hooks/ .cursor/hooks/
-# workflow-status.md 若不存在才複製，避免覆蓋進行中任務
-test -f .cursor/workflow-status.md || cp /tmp/cursor-workflow/.cursor/workflow-status.md .cursor/
+# workflow-status.md 若不存在才從 template 建立，避免覆蓋進行中任務
+test -f .cursor/workflow-status.md || cp /tmp/cursor-workflow/.cursor/workflow-status.template.md .cursor/workflow-status.md
+./scripts/verify-install.sh
 ```
 
-### 5. 試用沙盒
+### 5. 驗證與測試
 
-可 clone 本 repo 到空白目錄試用，或參考 [opencursor](https://github.com/wclinRD/opencursor) 試用專案（含 vitest 範例）。
+```bash
+# 完整安裝驗證（bun、檔案、Hook 單元測試）
+./scripts/verify-install.sh
+
+# 僅跑 Hook 測試
+bun test ./.cursor/hooks/check-progress.test.ts
+```
+
+### 6. 試用沙盒
+
+可 clone 本 repo 直接試用，或參考 [opencursor](https://github.com/wclinRD/opencursor) 試用專案。
 
 ---
 
@@ -62,7 +76,7 @@ test -f .cursor/workflow-status.md || cp /tmp/cursor-workflow/.cursor/workflow-s
 | 工作流 | 所有任務 6 階段 | 🟢 直接做 / 🟡 標準 / 🔴 完整迴圈 |
 | 任務追蹤 | scratchpad.md | **TodoWrite** + **workflow-status** |
 | TDD | 一律先寫測試 | 有測試框架且改行為時才要求 |
-| Stop Hook | 讀 scratchpad | 讀 `workflow-status.md` |
+| Stop Hook | 讀 scratchpad | 讀 `workflow-status.md`（含單元測試） |
 
 ---
 
@@ -70,11 +84,14 @@ test -f .cursor/workflow-status.md || cp /tmp/cursor-workflow/.cursor/workflow-s
 
 ```
 .cursor/
-├── rules/       smart-mcp, 00-complexity, 01-workflow-hybrid, 02-quality
-├── commands/    think, plan, review
-├── hooks/       Stop Hook（有實作步驟的任務）
-├── workflow-status.md
-└── plans/
+├── rules/                    smart-mcp, 00-complexity, 01-workflow-hybrid, 02-quality
+├── commands/                 think, plan, review, status
+├── hooks/                    Stop Hook + check-progress.test.ts
+├── workflow-status.template.md   版控範本（複製為 workflow-status.md 使用）
+├── workflow-status.md        runtime 狀態（.gitignore，不進版控）
+└── plans/                    /plan 產出的計畫存放處
+scripts/
+└── verify-install.sh         安裝驗證 + Hook 測試
 ```
 
 ---
@@ -100,7 +117,7 @@ test -f .cursor/workflow-status.md || cp /tmp/cursor-workflow/.cursor/workflow-s
 | 🟢 / 🟡 / 🔴 有實作 | **必須**（開始 → `IN_PROGRESS`；完成 → `ALL_DONE`） |
 | `/plan`、`/think`（若後續要實作） | **必須** |
 
-**不可**在有實作步驟的任務中跳過 workflow-status 更新。
+**不可**在有實作步驟的任務中跳過 workflow-status 更新。可用 `/status` 指令更新。
 
 | 值 | 意義 |
 |----|------|
@@ -108,6 +125,7 @@ test -f .cursor/workflow-status.md || cp /tmp/cursor-workflow/.cursor/workflow-s
 | `IN_PROGRESS` | 實作進行中 |
 | `ALL_DONE` | 完成 |
 | `NEED_REVISION: …` | 需修正（Stop Hook 自動迭代，最多 3 輪） |
+| 無效值 | Stop Hook 會提示修正 |
 
 ### smart_think
 
@@ -136,6 +154,7 @@ test -f .cursor/workflow-status.md || cp /tmp/cursor-workflow/.cursor/workflow-s
 | `/plan` | 必須 | 有實作則必須 | 🔴 必須 |
 | `/think` | 若後續實作則必須 | 有實作則必須 | 強制 |
 | `/review` | 檢查 completed | 有實作則必須 | 🔴 必須 |
+| `/status` | — | **寫入** | — |
 
 ---
 
@@ -153,4 +172,8 @@ test -f .cursor/workflow-status.md || cp /tmp/cursor-workflow/.cursor/workflow-s
 
 # 🔴 — TodoWrite + workflow-status + smart_think
 /plan 設計 plugin 載入器
+
+# 手動更新狀態
+/status IN_PROGRESS
+/status ALL_DONE
 ```

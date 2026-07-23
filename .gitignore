@@ -3,3 +3,6 @@ node_modules/
 .env
 .env.*
 *.log
+
+# Runtime workflow state (use workflow-status.template.md as seed)
+.cursor/workflow-status.md

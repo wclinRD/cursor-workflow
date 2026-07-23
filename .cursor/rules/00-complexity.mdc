@@ -19,61 +19,28 @@ alwaysApply: true
 
 風險：低=1、中=2、高=3（認證、金流、schema 變更等）
 
-## TodoWrite 使用規則（強制）
-
-| 類型 | TodoWrite |
-|------|-----------|
-| 純問答 / 解釋 code（無實作） | 可跳過 |
-| 🟢 有實作步驟 | **必須**（至少 1 項） |
-| 🟡 / 🔴 | **必須**（開始實作前建立） |
-| `/plan` | **必須** |
-
-**不可**在沒有 TodoWrite 的情況下開始改 code 或跑多步驟任務（純問答除外）。
-
-## workflow-status 使用規則（強制）
-
-| 類型 | workflow-status |
-|------|-----------------|
-| 純問答 / 解釋 code（無實作） | 維持 `IDLE` |
-| 🟢 / 🟡 / 🔴 有實作步驟 | **必須**（開始 → `IN_PROGRESS`；完成 → `ALL_DONE`） |
-| `/plan`、`/think`（若後續要實作） | **必須** |
-
-狀態值：`IDLE` | `IN_PROGRESS` | `ALL_DONE` | `NEED_REVISION: [原因]`
-
-**不可**在有實作步驟的任務中跳過 workflow-status 更新（純問答除外）。
-
-## smart_think 使用規則
-
-| 複雜度 | smart_think |
-|--------|-------------|
-| 🟢 | **不用** |
-| 🟡 | **符合觸發條件才用**（見 `01-workflow-hybrid.mdc`） |
-| 🔴 | **必須**（THINK 與 REVIEW 階段） |
-| `/think` | **強制** |
+> TodoWrite、workflow-status、smart_think 詳細規則見 `01-workflow-hybrid.mdc`。
 
 ## 🟢 簡單（≤ 3 分）
 
 - 純問答：直接回答，跳過 TodoWrite，維持 `IDLE`
-- **有實作**：**TodoWrite**（1–2 項）→ `workflow-status` → `IN_PROGRESS` → 執行 → 標記 completed → `ALL_DONE`
+- **有實作**：TodoWrite（1–2 項）→ `IN_PROGRESS` → 執行 → `ALL_DONE`
 - 跳過 smart_think 與完整 REVIEW 迴圈
 - 用 Read / Grep / StrReplace 即可
 - 範例：改 typo、重命名、解釋一段 code
 
 ## 🟡 中等（4-8 分）
 
-- **必須 TodoWrite**：分析後、實作前建立子任務
-- **必須 workflow-status**：實作前 → `IN_PROGRESS`；完成 → `ALL_DONE`
-- 標準流程：分析 → TodoWrite → workflow-status → 實作 → 驗證 → REVIEW
-- 同時只有一項 `in_progress`；完成一項立即 `merge: true` 更新
+- **必須** TodoWrite + workflow-status（實作前建立 / 更新）
+- 標準流程：分析 → TodoWrite → `IN_PROGRESS` → 實作 → 驗證 → REVIEW → `ALL_DONE`
 - 涉及新行為時遵循 TDD
-- **smart_think**：符合觸發條件時必須呼叫
+- smart_think：符合觸發條件時必須（見 `01-workflow-hybrid.mdc`）
 - 範例：新增 API、模組重構、跨 2-3 檔案的 bug
 
 ## 🔴 複雜（> 8 分）
 
-- **必須 TodoWrite**：smart_think 之後、實作前建立
-- **必須 smart_think**：THINK 與 REVIEW 階段
-- **必須 workflow-status**：實作前 → `IN_PROGRESS`；完成 → `ALL_DONE`（Stop Hook 最多 3 輪迭代）
+- **必須** smart_think THINK → TodoWrite → 實作 → smart_think REVIEW
+- **必須** workflow-status（Stop Hook 最多 3 輪迭代）
 - 完整 Hybrid 迴圈（見 `01-workflow-hybrid.mdc`）
 - 範例：大重構、多模組新功能、難以重現的 debug
 
