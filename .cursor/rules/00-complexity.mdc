@@ -30,6 +30,18 @@ alwaysApply: true
 
 **不可**在沒有 TodoWrite 的情況下開始改 code 或跑多步驟任務（純問答除外）。
 
+## workflow-status 使用規則（強制）
+
+| 類型 | workflow-status |
+|------|-----------------|
+| 純問答 / 解釋 code（無實作） | 維持 `IDLE` |
+| 🟢 / 🟡 / 🔴 有實作步驟 | **必須**（開始 → `IN_PROGRESS`；完成 → `ALL_DONE`） |
+| `/plan`、`/think`（若後續要實作） | **必須** |
+
+狀態值：`IDLE` | `IN_PROGRESS` | `ALL_DONE` | `NEED_REVISION: [原因]`
+
+**不可**在有實作步驟的任務中跳過 workflow-status 更新（純問答除外）。
+
 ## smart_think 使用規則
 
 | 複雜度 | smart_think |
@@ -41,8 +53,8 @@ alwaysApply: true
 
 ## 🟢 簡單（≤ 3 分）
 
-- 純問答：直接回答，跳過 TodoWrite
-- **有實作**：**TodoWrite**（1–2 項）→ 執行 → 標記 completed
+- 純問答：直接回答，跳過 TodoWrite，維持 `IDLE`
+- **有實作**：**TodoWrite**（1–2 項）→ `workflow-status` → `IN_PROGRESS` → 執行 → 標記 completed → `ALL_DONE`
 - 跳過 smart_think 與完整 REVIEW 迴圈
 - 用 Read / Grep / StrReplace 即可
 - 範例：改 typo、重命名、解釋一段 code
@@ -50,7 +62,8 @@ alwaysApply: true
 ## 🟡 中等（4-8 分）
 
 - **必須 TodoWrite**：分析後、實作前建立子任務
-- 標準流程：分析 → TodoWrite → 實作 → 驗證 → REVIEW
+- **必須 workflow-status**：實作前 → `IN_PROGRESS`；完成 → `ALL_DONE`
+- 標準流程：分析 → TodoWrite → workflow-status → 實作 → 驗證 → REVIEW
 - 同時只有一項 `in_progress`；完成一項立即 `merge: true` 更新
 - 涉及新行為時遵循 TDD
 - **smart_think**：符合觸發條件時必須呼叫
@@ -60,12 +73,12 @@ alwaysApply: true
 
 - **必須 TodoWrite**：smart_think 之後、實作前建立
 - **必須 smart_think**：THINK 與 REVIEW 階段
+- **必須 workflow-status**：實作前 → `IN_PROGRESS`；完成 → `ALL_DONE`（Stop Hook 最多 3 輪迭代）
 - 完整 Hybrid 迴圈（見 `01-workflow-hybrid.mdc`）
-- `workflow-status.md` → `IN_PROGRESS`；完成 → `ALL_DONE`
 - 範例：大重構、多模組新功能、難以重現的 debug
 
 ## 動態調整
 
 - 執行中發現比預期簡單 → 可合併 TodoWrite 項，但**不可完全取消**（除非變純問答）
 - 執行中發現比預期複雜 → 升級，**補 TodoWrite 項** + smart_think + 🔴 流程
-- 純問答、讀 repo → 可跳過 TodoWrite
+- 純問答、讀 repo → 可跳過 TodoWrite 與 workflow-status（維持 `IDLE`）

@@ -44,7 +44,7 @@ async function main() {
   if (status.startsWith("IN_PROGRESS")) {
     console.log(
       JSON.stringify({
-        followup_message: `[迭代 ${input.loop_count + 1}/${MAX_ITERATIONS}] 🔴 任務進行中：請檢查 TodoWrite 是否有未完成項，繼續下一子任務；全部完成後執行 /review 並將 workflow-status 設為 ALL_DONE。`,
+        followup_message: `[迭代 ${input.loop_count + 1}/${MAX_ITERATIONS}] 任務進行中：請檢查 TodoWrite 是否有未完成項，繼續下一子任務；全部完成後執行 /review 並將 workflow-status 設為 ALL_DONE。`,
       })
     );
     process.exit(0);

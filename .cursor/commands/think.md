@@ -38,6 +38,6 @@ smart_think({
 
 ### 4. 後續
 - 有實作：**TodoWrite 必須**（🟢 至少 1 項）
-- 🔴：`.cursor/workflow-status.md` → `IN_PROGRESS`
+- 有實作：`.cursor/workflow-status.md` → `IN_PROGRESS`
 
 日常讀寫用 Cursor built-ins（`smart-mcp.mdc`）。

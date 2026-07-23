@@ -24,6 +24,12 @@ alwaysApply: true
 - [ ] 相關測試已執行且通過
 - [ ] 新行為有對應測試（若專案慣例要求 TDD）
 
+## workflow-status 檢查（強制）
+
+- [ ] 有實作步驟的任務：開始前已設 `IN_PROGRESS`？
+- [ ] 完成後已設 `ALL_DONE`？
+- [ ] 或明確 `NEED_REVISION: [原因]` 並說明修正方向
+
 ## smart_think 檢查
 
 - [ ] 🔴 任務：THINK 與 REVIEW 皆已呼叫 smart_think？
@@ -37,13 +43,9 @@ alwaysApply: true
 - [ ] 無遺留 `in_progress` / `pending`？
 - [ ] 每完成一項都有 `merge: true` 更新？
 
-## 🔴 完整迴圈額外檢查
-
-- [ ] `.cursor/workflow-status.md` 已寫入 `ALL_DONE`
-- [ ] 或明確 `NEED_REVISION` 並說明原因
-
 ## 常見問題
 
 - **跳過 TodoWrite 直接改** → 有實作步驟時**禁止**；先建 todo
+- **跳過 workflow-status** → 有實作步驟時**禁止**；先設 `IN_PROGRESS`
 - **迭代停不下來** → 確認 workflow-status 為 `ALL_DONE`；或已達 3 輪上限
 - **Todo 狀態不同步** → 每完成一項立即 `merge: true` 更新

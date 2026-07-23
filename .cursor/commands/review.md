@@ -28,7 +28,7 @@ Shell 執行相關測試。
 ### 建議
 ```
 
-### 4. 更新 workflow-status（🔴 任務）
+### 4. 更新 workflow-status（有實作步驟時必須）
 - 通過：`ALL_DONE`
 - 需修正：`NEED_REVISION: [原因]`
 

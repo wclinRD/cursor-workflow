@@ -5,7 +5,7 @@ alwaysApply: true
 
 # Hybrid 工作流
 
-> 任務追蹤 **一律強制 TodoWrite**（純問答除外）。
+> 任務追蹤 **一律強制 TodoWrite + workflow-status**（純問答除外）。
 > smart_think 依複雜度與觸發條件決定（見下）。
 
 ## TodoWrite（強制）
@@ -29,10 +29,32 @@ alwaysApply: true
 
 ---
 
+## workflow-status（強制）
+
+### 何時必須更新
+- 任何涉及 **改 code、跑命令、多步驟實作** 的任務
+- `/plan`、`/think`（若後續要實作）、🟢、🟡、🔴 任務
+- **實作前** 設為 `IN_PROGRESS`，不可先改檔再補
+
+### 何時維持 IDLE
+- 純問答：解釋 code、回答問題、讀 repo 說明
+
+### 狀態值
+| 狀態 | 時機 |
+|------|------|
+| `IDLE` | 無進行中任務（預設） |
+| `IN_PROGRESS` | 開始實作前 |
+| `ALL_DONE` | 所有子任務完成且驗證通過 |
+| `NEED_REVISION: [原因]` | 審查發現需修正 |
+
+Stop Hook 讀取此檔決定是否自動迭代（最多 3 輪）。
+
+---
+
 ## smart_think 決策
 
-### 🟢 — 不用
-TodoWrite（若有實作）→ Read / Grep / StrReplace / Shell。
+### 🟢 — 不用 smart_think
+TodoWrite（若有實作）→ workflow-status → `IN_PROGRESS` → Read / Grep / StrReplace / Shell → `ALL_DONE`。
 
 ### 🟡 — 符合以下任一條件 **必須** 呼叫 `smart_think`
 
@@ -59,7 +81,7 @@ TodoWrite（若有實作）→ Read / Grep / StrReplace / Shell。
 ## 標準流程（🟡）
 
 ```
-分析 [smart_think?] → TodoWrite（必須）→ 實作 → 驗證 → REVIEW
+分析 [smart_think?] → TodoWrite（必須）→ workflow-status IN_PROGRESS → 實作 → 驗證 → REVIEW → ALL_DONE
 ```
 
 1. **分析**：評估 🟡 smart_think 觸發條件
@@ -71,11 +93,10 @@ TodoWrite（若有實作）→ Read / Grep / StrReplace / Shell。
 ## 完整迴圈（🔴）
 
 ```
-smart_think → TodoWrite（必須）→ [TDD] → IMPLEMENT → VERIFY → smart_think REVIEW
+smart_think → TodoWrite（必須）→ workflow-status IN_PROGRESS → [TDD] → IMPLEMENT → VERIFY → smart_think REVIEW → ALL_DONE
 ```
 
 - TodoWrite 在 THINK 之後、實作之前 **必須** 建立
-- `workflow-status.md` → `IN_PROGRESS` / `ALL_DONE` / `NEED_REVISION`
 - Stop Hook 最多 3 輪
 
 ## 手動觸發
@@ -88,7 +109,7 @@ smart_think → TodoWrite（必須）→ [TDD] → IMPLEMENT → VERIFY → smar
 
 ## 工具優先順序
 
-- **追蹤**：TodoWrite（強制）
+- **追蹤**：TodoWrite + workflow-status（強制）
 - **思考**：smart_think / smart_deep_think（依上表）
 - **讀寫搜尋測試**：Cursor built-ins（見 `smart-mcp.mdc`）
 

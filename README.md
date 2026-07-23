@@ -30,6 +30,16 @@ brew install bun   # Stop Hook
 
 **不可**在沒有 TodoWrite 的情況下開始多步驟實作或改 code。
 
+### workflow-status（強制）
+
+| 類型 | workflow-status |
+|------|-----------------|
+| 純問答（無實作） | 維持 `IDLE` |
+| 🟢 / 🟡 / 🔴 有實作 | **必須**（開始 → `IN_PROGRESS`；完成 → `ALL_DONE`） |
+| `/plan`、`/think`（若後續要實作） | **必須** |
+
+**不可**在有實作步驟的任務中跳過 workflow-status 更新。
+
 ### smart_think
 
 | 複雜度 | 規則 |
@@ -56,19 +66,19 @@ brew install bun   # Stop Hook
 .cursor/
 ├── rules/       smart-mcp, 00-complexity, 01-workflow-hybrid, 02-quality
 ├── commands/    think, plan, review
-├── hooks/       Stop Hook（🔴）
+├── hooks/       Stop Hook（有實作步驟的任務）
 ├── workflow-status.md
 └── plans/
 ```
 
 ## workflow-status.md
 
-僅 🔴 任務使用。任務清單以 **TodoWrite** 為準。
+有實作步驟的任務 **必須** 更新（純問答維持 `IDLE`）。任務清單以 **TodoWrite** 為準。
 
 | 值 | 意義 |
 |----|------|
-| `IDLE` | 無 🔴 任務 |
-| `IN_PROGRESS` | 🔴 進行中 |
+| `IDLE` | 無進行中任務（預設） |
+| `IN_PROGRESS` | 實作進行中 |
 | `ALL_DONE` | 完成 |
 | `NEED_REVISION: …` | 需修正 |
 
@@ -76,8 +86,8 @@ brew install bun   # Stop Hook
 
 ## 自訂指令
 
-| 指令 | TodoWrite | smart_think |
-|------|-----------|-------------|
-| `/plan` | 必須 | 🔴 必須 |
-| `/think` | 若後續實作則必須 | 強制 |
-| `/review` | 檢查 completed | 🔴 必須 |
+| 指令 | TodoWrite | workflow-status | smart_think |
+|------|-----------|-----------------|-------------|
+| `/plan` | 必須 | 有實作則必須 | 🔴 必須 |
+| `/think` | 若後續實作則必須 | 有實作則必須 | 強制 |
+| `/review` | 檢查 completed | 有實作則必須 | 🔴 必須 |

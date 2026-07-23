@@ -15,7 +15,7 @@ $ARGUMENTS
 ### 2. TodoWrite 規劃（必須）
 - **必須** 用 TodoWrite 建立子任務（實作前完成）
 - 確認後第一項設 `in_progress`
-- 🔴：`.cursor/workflow-status.md` → `IN_PROGRESS`
+- 有實作：`.cursor/workflow-status.md` → `IN_PROGRESS`
 
 ### 3. 確認
 向使用者展示計畫摘要，確認後開始執行。
