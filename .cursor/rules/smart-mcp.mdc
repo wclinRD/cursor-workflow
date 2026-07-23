@@ -51,3 +51,39 @@ If unsure which sub-tool: `smart_run({ tool: "hybrid_router", args: { question: 
    - 目標、複雜度（🟢🟡🔴）、步驟列表、風險
 3. 註明「smart MCP 不可用，已 inline 降級」
 4. 🟡 / 🔴 任務仍須完成同等深度的分析與審查
+
+## Token 策略（Smart MCP 可用時）
+
+> **自動化**：`preToolUse` Hook 會替 `smart_exa_search` / `smart_exa_crawl` 注入 caveman；`postToolUse` Hook 會在 tool 累積達閾值時注入 compact 指示。**使用者無需下 `/compact`**（該指令僅作手動加速）。
+
+### caveman 壓縮（search / crawl 預設）
+
+`smart_exa_search`、`smart_exa_crawl` 預設帶：
+```
+compress: "caveman"
+compressLevel: "semantic"   # 一般研究
+```
+
+| compressLevel | 何時用 |
+|---------------|--------|
+| `light` | 需要較完整語句、仍想省一點 token |
+| `semantic` | **預設**；研究、比較、技術調查 |
+| `aggressive` | 長對話、已讀大量結果、只需事實 |
+| `ultra` | context 非常緊；可接受簡短標籤式輸出 |
+
+**改 `compress: "none"`** 當：需要逐字引文、法規原文、精確措辞、引用審核。
+
+### smart_compact（長對話釋放 context）
+
+**自動觸發**（Hook，`postToolUse` 每 15 次 tool 呼叫）：
+- Hook 注入 `[token-auto]` additional_context
+- Agent **必須** 立即呼叫 `smart_compact({ auto: true, ... })`，無需等使用者
+
+**手動加速**（可選）：使用者 `/compact` 或 Agent 自覺 context 緊時提前呼叫
+
+```
+smart_compact({ auto: true, currentGoal: "...", currentTodos: [...] })
+```
+- 零 LLM 成本；分析哪些 tool 輸出可丟棄或摘要
+- 執行後依 recovery context 繼續，**不要** 重置 workflow-state.json
+- 仍無法緩解時：建議開新對話（最強 compact）

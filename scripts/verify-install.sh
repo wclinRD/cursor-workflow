@@ -33,12 +33,16 @@ for f in \
   ".cursor/rules/smart-mcp.mdc" \
   ".cursor/hooks/hooks.json" \
   ".cursor/hooks/workflow-state.mjs" \
+  ".cursor/hooks/token-automation.mjs" \
+  ".cursor/hooks/run-token-hook.sh" \
   ".cursor/hooks/run-stop-hook.sh" \
   ".cursor/hooks/check-progress.test.ts" \
+  ".cursor/hooks/token-automation.test.ts" \
   ".cursor/commands/plan.md" \
   ".cursor/commands/think.md" \
   ".cursor/commands/review.md" \
   ".cursor/commands/status.md" \
+  ".cursor/commands/compact.md" \
   ".cursor/workflow-state.template.json" \
   ".cursor/workflow-status.template.md" \
   ".cursor/plans/.gitkeep"
@@ -53,6 +57,15 @@ if bun test ./.cursor/hooks/check-progress.test.ts; then
   echo "✓ Hook 測試通過"
 else
   echo "✗ Hook 測試失敗"
+  ERRORS=$((ERRORS + 1))
+fi
+
+echo ""
+echo "=== Token automation 單元測試 ==="
+if bun test ./.cursor/hooks/token-automation.test.ts; then
+  echo "✓ Token automation 測試通過"
+else
+  echo "✗ Token automation 測試失敗"
   ERRORS=$((ERRORS + 1))
 fi
 

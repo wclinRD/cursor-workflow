@@ -118,6 +118,15 @@ smart_think → workflow-state.json → IN_PROGRESS → [TDD] → IMPLEMENT → 
 | `/plan` | 有實作則必須 | 🔴 必須；🟡 看觸發 |
 | `/review` | 必須更新 status | 🔴 必須 |
 | `/status` | **寫入 JSON** | — |
+| `/compact` | **維持**（不重置） | — |
+
+## Context 管理
+
+- 切換任務、Agent 混淆、完成一個功能單元 → **考慮新對話**
+- **caveman**：Hook 自動注入 exa search/crawl，無需使用者操作
+- **smart_compact**：Hook 每 15 次 tool 呼叫自動注入 `[token-auto]`；Agent **必須**立即執行 compact
+- `/compact`：僅手動加速（可選）
+- compact 後仍不夠 → 開新對話，並用 workflow-state.json 恢復任務上下文
 
 ## 工具優先順序
 

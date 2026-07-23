@@ -7,3 +7,4 @@ node_modules/
 # Runtime workflow state (use workflow-state.template.json as seed)
 .cursor/workflow-state.json
 .cursor/workflow-status.md
+.cursor/hook-session.json

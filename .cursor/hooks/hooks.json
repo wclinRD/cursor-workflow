@@ -1,6 +1,22 @@
 {
   "version": 1,
   "hooks": {
+    "sessionStart": [
+      {
+        "command": "bash .cursor/hooks/run-token-hook.sh session-reset"
+      }
+    ],
+    "preToolUse": [
+      {
+        "command": "bash .cursor/hooks/run-token-hook.sh pre-exa-compress",
+        "matcher": "MCP:.*smart_exa_(search|crawl)"
+      }
+    ],
+    "postToolUse": [
+      {
+        "command": "bash .cursor/hooks/run-token-hook.sh post-compact-track"
+      }
+    ],
     "stop": [
       {
         "command": "bash .cursor/hooks/run-stop-hook.sh"
