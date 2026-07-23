@@ -1,19 +1,81 @@
 # Cursor Smart Hybrid Workflow
 
-> Cursor 原生 **TodoWrite** 強制追蹤任務；Smart MCP 用於深度分析。
+> 將 OpenCode Smart Hybrid Agent 工作流移植到 Cursor，**貼近 Cursor 原生工具**（TodoWrite、Read、Grep、StrReplace），Smart MCP 用於深度分析。
 
 ---
 
 ## 快速開始
 
+### 1. 選擇安裝範圍
+
+| 類型 | 影響範圍 | 做法 |
+|------|---------|------|
+| **專案級** | 僅該專案 | 複製 `.cursor/` 到專案根目錄 |
+| **全域** | 所有專案 | 複製 `rules/`、`hooks/`、`commands/` 到 `~/.cursor/` |
+
+### 2. 安裝（專案級）
+
 ```bash
 git clone https://github.com/wclinRD/cursor-workflow.git /tmp/cursor-workflow
 cd YOUR_PROJECT
 cp -r /tmp/cursor-workflow/.cursor .
-brew install bun   # Stop Hook
+brew install bun   # Stop Hook 需要
 ```
 
-全域安裝：複製 `rules/`、`hooks/`、`commands/` 到 `~/.cursor/`。
+安裝後重載 Cursor 視窗，讓 `.cursor/rules` 生效。
+
+### 3. 安裝（全域）
+
+```bash
+git clone https://github.com/wclinRD/cursor-workflow.git /tmp/cursor-workflow
+cp -r /tmp/cursor-workflow/.cursor/rules/ ~/.cursor/rules/
+cp -r /tmp/cursor-workflow/.cursor/hooks/ ~/.cursor/hooks/
+cp -r /tmp/cursor-workflow/.cursor/commands/ ~/.cursor/commands/
+brew install bun   # Stop Hook 需要
+```
+
+> 全域安裝不含 `workflow-status.md`（各專案狀態獨立）。專案級安裝會一併複製。
+
+### 4. 更新既有專案
+
+```bash
+git clone https://github.com/wclinRD/cursor-workflow.git /tmp/cursor-workflow
+cd YOUR_PROJECT
+cp -r /tmp/cursor-workflow/.cursor/rules/ .cursor/rules/
+cp -r /tmp/cursor-workflow/.cursor/commands/ .cursor/commands/
+cp -r /tmp/cursor-workflow/.cursor/hooks/ .cursor/hooks/
+# workflow-status.md 若不存在才複製，避免覆蓋進行中任務
+test -f .cursor/workflow-status.md || cp /tmp/cursor-workflow/.cursor/workflow-status.md .cursor/
+```
+
+### 5. 試用沙盒
+
+可 clone 本 repo 到空白目錄試用，或參考 [opencursor](https://github.com/wclinRD/opencursor) 試用專案（含 vitest 範例）。
+
+---
+
+## 與舊版差異
+
+| 項目 | 舊版 | 本版（Hybrid） |
+|------|------|----------------|
+| 工具 | 強制 Smart MCP | 日常 Cursor built-ins + Smart 選用 |
+| 工作流 | 所有任務 6 階段 | 🟢 直接做 / 🟡 標準 / 🔴 完整迴圈 |
+| 任務追蹤 | scratchpad.md | **TodoWrite** + **workflow-status** |
+| TDD | 一律先寫測試 | 有測試框架且改行為時才要求 |
+| Stop Hook | 讀 scratchpad | 讀 `workflow-status.md` |
+
+---
+
+## 目錄結構
+
+```
+.cursor/
+├── rules/       smart-mcp, 00-complexity, 01-workflow-hybrid, 02-quality
+├── commands/    think, plan, review
+├── hooks/       Stop Hook（有實作步驟的任務）
+├── workflow-status.md
+└── plans/
+```
 
 ---
 
@@ -40,6 +102,13 @@ brew install bun   # Stop Hook
 
 **不可**在有實作步驟的任務中跳過 workflow-status 更新。
 
+| 值 | 意義 |
+|----|------|
+| `IDLE` | 無進行中任務（預設） |
+| `IN_PROGRESS` | 實作進行中 |
+| `ALL_DONE` | 完成 |
+| `NEED_REVISION: …` | 需修正（Stop Hook 自動迭代，最多 3 輪） |
+
 ### smart_think
 
 | 複雜度 | 規則 |
@@ -51,36 +120,12 @@ brew install bun   # Stop Hook
 
 🟡 觸發條件：需求模糊、跨 3+ 檔、根因不明、架構取捨、使用者要求、卡關。
 
-### 複雜度
+### 複雜度評分
 
 ```
 分數 = 步驟×2 + 工具×2 + 檔案×1 + 風險×3
 ≤3 🟢 | 4-8 🟡 | >8 🔴
 ```
-
----
-
-## 目錄結構
-
-```
-.cursor/
-├── rules/       smart-mcp, 00-complexity, 01-workflow-hybrid, 02-quality
-├── commands/    think, plan, review
-├── hooks/       Stop Hook（有實作步驟的任務）
-├── workflow-status.md
-└── plans/
-```
-
-## workflow-status.md
-
-有實作步驟的任務 **必須** 更新（純問答維持 `IDLE`）。任務清單以 **TodoWrite** 為準。
-
-| 值 | 意義 |
-|----|------|
-| `IDLE` | 無進行中任務（預設） |
-| `IN_PROGRESS` | 實作進行中 |
-| `ALL_DONE` | 完成 |
-| `NEED_REVISION: …` | 需修正 |
 
 ---
 
@@ -91,3 +136,21 @@ brew install bun   # Stop Hook
 | `/plan` | 必須 | 有實作則必須 | 🔴 必須 |
 | `/think` | 若後續實作則必須 | 有實作則必須 | 強制 |
 | `/review` | 檢查 completed | 有實作則必須 | 🔴 必須 |
+
+---
+
+## 快速試用範例
+
+```bash
+# 純問答 — 無 TodoWrite，維持 IDLE
+解釋這個專案的 rules 結構
+
+# 🟢 有實作 — TodoWrite + workflow-status 必須
+把某個函式改成回傳大寫
+
+# 🟡 — TodoWrite + workflow-status + 條件式 smart_think
+/plan 新增模組與測試
+
+# 🔴 — TodoWrite + workflow-status + smart_think
+/plan 設計 plugin 載入器
+```
