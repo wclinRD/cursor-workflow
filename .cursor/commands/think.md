@@ -1,6 +1,6 @@
 # /think — 結構化分析
 
-對以下任務做結構化分析（**強制** 呼叫 `smart_think`）：
+對以下任務做結構化分析（**強制** 呼叫 `smart_think`，不可用時 **inline 降級**）：
 
 $ARGUMENTS
 
@@ -12,7 +12,7 @@ $ARGUMENTS
 ≤3 🟢 | 4-8 🟡 | >8 🔴
 ```
 
-### 2. smart_think（必須）
+### 2. smart_think（必須，可降級）
 ```
 smart_think({
   mode: "structured",
@@ -25,19 +25,21 @@ smart_think({
 ```
 🔴 或高風險：改用 `smart_deep_think`。
 
+**若 MCP 不可用**：改 inline 輸出相同結構，並註明降級。
+
 ### 3. 輸出
 ```markdown
 ## 任務分析
 - **目標**：
 - **複雜度**：🟢/🟡/🔴
-- **smart_think**：已執行 ✓
+- **分析方式**：smart_think ✓ / inline 降級
 - **步驟**：
   1. … — 工具：Read/Grep/Shell/smart_*
 - **風險**：
 ```
 
 ### 4. 後續
-- 有實作：**TodoWrite 必須**（🟢 至少 1 項）
-- 有實作：`.cursor/workflow-status.md` → `IN_PROGRESS`
+- 有實作（非 🟢 單步豁免）：寫入 `workflow-state.json`，status → `IN_PROGRESS`
+- 可選：同步 TodoWrite
 
 日常讀寫用 Cursor built-ins（`smart-mcp.mdc`）。

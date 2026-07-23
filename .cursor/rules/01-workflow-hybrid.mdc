@@ -5,116 +5,122 @@ alwaysApply: true
 
 # Hybrid 工作流
 
-> 任務追蹤 **一律強制 TodoWrite + workflow-status**（純問答除外）。
+> 任務追蹤以 **`workflow-state.json`（status + todos）** 為唯一真相來源；Stop Hook 讀此檔。
+> TodoWrite 可選用於對話內可見性，但**必須與 JSON 同步**。
 > smart_think 依複雜度與觸發條件決定（見下）。
 
-## TodoWrite（強制）
+## workflow-state.json（強制，🟢 單步豁免除外）
 
-### 何時必須建立
-- 任何涉及 **改 code、跑命令、多步驟實作** 的任務
-- `/plan`、`/think`（若後續要實作）、🟡、🔴 任務
-- **實作前** 建立，不可先改檔再補 todo
+### 檔案位置
+`.cursor/workflow-state.json`（由 `workflow-state.template.json` 複製初始化）
 
-### 何時可跳過
-- 純問答：解釋 code、回答問題、讀 repo 說明
-- 單句可完成的 🟢 且使用者未要求追蹤
+### 結構
+```json
+{
+  "version": 1,
+  "status": "IDLE",
+  "revision": "NEED_REVISION 時的可選原因",
+  "todos": [
+    { "id": "1", "content": "子任務描述", "status": "pending" }
+  ]
+}
+```
 
-### 使用規則
-1. 建立後立即將第一項設為 `in_progress`
-2. **同時只有一項** `in_progress`
-3. 完成驗證後才標 `completed`
-4. 用 `merge: true` 更新，不要整份重建
-5. 任務結束前所有項須 `completed` 或 `cancelled`
-6. 🟢 至少 1 項；🟡🔴 依子任務拆分（通常 2+ 項）
+`todos[].status`：`pending` | `in_progress` | `completed` | `cancelled`
+
+### 何時必須更新
+- 任何涉及 **改 code、跑命令、多步驟實作** 的任務（🟡 / 🔴，或 🟢 但 >1 步）
+- `/plan`、`/think`（若後續要實作）
+- **實作前** 寫入 todos 並設 `status: IN_PROGRESS`
+
+### 何時可跳過（🟢 單步豁免）
+同時符合以下條件時，**可不建立/更新** workflow-state.json（維持 `IDLE` 或檔案不存在）：
+1. 複雜度 🟢 且 **恰好 1 個可驗證步驟**
+2. **僅改 1 個檔案**
+3. **低風險**（無認證、金流、schema 變更）
+
+### 狀態值
+| status | 時機 |
+|--------|------|
+| `IDLE` | 無進行中任務（預設） |
+| `IN_PROGRESS` | 開始實作前 |
+| `ALL_DONE` | 所有 todos 完成且驗證通過 |
+| `NEED_REVISION` | 審查發現需修正（原因放 `revision` 或 status 字串） |
+
+Stop Hook 會檢查 **status + todos**（最多 3 輪迭代）。可用 `/status` 更新。
+
+### 向後相容
+若僅存在舊版 `workflow-status.md`（單行文字），Hook 仍可讀取 status，但**無 todos 驗證**。新專案請用 JSON。
 
 ---
 
-## workflow-status（強制）
+## TodoWrite（可選，建議 🟡🔴 使用）
 
-### 何時必須更新
-- 任何涉及 **改 code、跑命令、多步驟實作** 的任務
-- `/plan`、`/think`（若後續要實作）、🟢、🟡、🔴 任務
-- **實作前** 設為 `IN_PROGRESS`，不可先改檔再補
+### 何時建議使用
+- 🟡 / 🔴 任務：方便在對話中追蹤進度
+- 多子任務、需頻繁更新狀態時
 
-### 何時維持 IDLE
-- 純問答：解釋 code、回答問題、讀 repo 說明
+### 同步規則（使用 TodoWrite 時）
+1. **每次** TodoWrite 更新後，**立即**同步至 `workflow-state.json` 的 `todos`
+2. 同時只有一項 `in_progress`
+3. 用 `merge: true` 更新 TodoWrite
 
-### 狀態值
-| 狀態 | 時機 |
-|------|------|
-| `IDLE` | 無進行中任務（預設） |
-| `IN_PROGRESS` | 開始實作前 |
-| `ALL_DONE` | 所有子任務完成且驗證通過 |
-| `NEED_REVISION: [原因]` | 審查發現需修正 |
-
-Stop Hook 讀取此檔決定是否自動迭代（最多 3 輪）。可用 `/status` 指令更新。無效值會觸發 Hook 警告。
+### 何時可跳過
+- 純問答
+- 🟢 單步豁免（見上）
+- 僅用 workflow-state.json 追蹤時
 
 ---
 
 ## smart_think 決策
 
+### MCP 不可用時的降級
+若 `smart_think` / `smart_deep_think` 無法呼叫（MCP 未配置、needsAuth、工具錯誤）：
+- **改為 inline 結構化分析**，輸出與 `/think` 相同模板（目標、複雜度、步驟、風險）
+- 在回覆中註明「smart MCP 不可用，已 inline 降級」
+- 🟡 / 🔴 仍須完成 THINK / REVIEW 的**內容**，只是工具改為 inline
+
 ### 🟢 — 不用 smart_think
-TodoWrite（若有實作）→ workflow-status → `IN_PROGRESS` → Read / Grep / StrReplace / Shell → `ALL_DONE`。
+workflow-state（若需要）→ `IN_PROGRESS` → 實作 → `ALL_DONE`。
 
-### 🟡 — 符合以下任一條件 **必須** 呼叫 `smart_think`
+### 🟡 — 符合以下任一條件 **必須** 呼叫 `smart_think`（或降級 inline）
 
-1. **需求模糊**：目標不清、有多種可行做法、需 trade-off
-2. **跨檔案依賴**：涉及 3+ 檔案或模組邊界
-3. **根因不明**： bug 現象清楚但原因未確認
-4. **架構取捨**：影響 API 設計、資料流、擴充性
-5. **使用者要求**：明確說「分析」「先想」「/think」
-6. **執行中卡關**：第一次嘗試失敗，需重新拆解
+1. **需求模糊** 2. **跨 3+ 檔** 3. **根因不明** 4. **架構取捨** 5. **使用者要求** 6. **卡關**
 
-**不符合以上** → inline 簡短分析即可。
-
-### 🔴 — **必須** smart_think
+### 🔴 — **必須** smart_think（或降級 inline）
 
 | 階段 | 工具 |
 |------|------|
-| THINK | `smart_think`（structured）或 `smart_deep_think` |
-| REVIEW | 至少 `smart_think`；高風險用 `smart_deep_think` |
+| THINK | `smart_think` / `smart_deep_think` / inline 降級 |
+| REVIEW | 同上 |
 
-🔴 順序：**smart_think THINK → TodoWrite → 實作**（THINK 前不得改 code 或建 TodoWrite）。
+🔴 順序：**THINK → workflow-state todos → 實作**（THINK 前不得改 code）。
 
 ---
 
 ## 標準流程（🟡）
 
 ```
-分析 [smart_think?] → TodoWrite（必須）→ workflow-status IN_PROGRESS → 實作 → 驗證 → REVIEW → ALL_DONE
+分析 [smart_think?] → workflow-state.json → IN_PROGRESS → 實作 → 驗證 → REVIEW → ALL_DONE
 ```
-
-1. **分析**：評估 🟡 smart_think 觸發條件
-2. **TodoWrite**：**必須**建立子任務
-3. **實作**：逐項完成，每項完成即更新 todo
-4. **驗證**：Shell 測試或手動確認
-5. **REVIEW**：TodoWrite 全部 `completed`
 
 ## 完整迴圈（🔴）
 
 ```
-smart_think → TodoWrite（必須）→ workflow-status IN_PROGRESS → [TDD] → IMPLEMENT → VERIFY → smart_think REVIEW → ALL_DONE
+smart_think → workflow-state.json → IN_PROGRESS → [TDD] → IMPLEMENT → VERIFY → smart_think REVIEW → ALL_DONE
 ```
-
-- TodoWrite 在 THINK 之後、實作之前 **必須** 建立
-- Stop Hook 最多 3 輪
 
 ## 手動觸發
 
-| 指令 | TodoWrite | workflow-status | smart_think |
-|------|-----------|-----------------|-------------|
-| `/think` | 若後續實作則必須 | 有實作則必須 | 強制 |
-| `/plan` | **必須** | 有實作則必須 | 🔴 必須；🟡 看觸發條件 |
-| `/review` | 檢查全部 completed | 有實作則必須 | 🔴 必須 |
-| `/status` | — | **寫入** | — |
+| 指令 | workflow-state | smart_think |
+|------|----------------|-------------|
+| `/think` | 有實作則必須 | 強制（可降級） |
+| `/plan` | 有實作則必須 | 🔴 必須；🟡 看觸發 |
+| `/review` | 必須更新 status | 🔴 必須 |
+| `/status` | **寫入 JSON** | — |
 
 ## 工具優先順序
 
-- **追蹤**：TodoWrite + workflow-status（強制）
-- **思考**：smart_think / smart_deep_think（依上表）
+- **追蹤**：workflow-state.json（強制）；TodoWrite（可選同步）
+- **思考**：smart_think / inline 降級
 - **讀寫搜尋測試**：Cursor built-ins（見 `smart-mcp.mdc`）
-
-## Context 管理
-
-- 切換任務、Agent 混淆、完成一個功能單元 → 考慮新對話
-- 長對話可用 `smart_compact`（若可用）

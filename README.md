@@ -1,6 +1,9 @@
-# Cursor Smart Hybrid Workflow
+# cursor-workflow
 
-> 將 OpenCode Smart Hybrid Agent 工作流移植到 Cursor，**貼近 Cursor 原生工具**（TodoWrite、Read、Grep、StrReplace），Smart MCP 用於深度分析。
+> 將 OpenCode Smart Hybrid Agent 工作流移植到 Cursor，**貼近 Cursor 原生工具**（Read、Grep、StrReplace），Smart MCP 用於深度分析；任務追蹤以 **`workflow-state.json`** 為唯一真相來源。
+
+**品牌名稱**：`cursor-workflow`（本 repo）  
+**試用沙盒**：可將 repo clone 到任意目錄試用；[opencursor](https://github.com/wclinRD/opencursor) 為官方試用範例專案名稱。
 
 ---
 
@@ -19,9 +22,10 @@
 git clone https://github.com/wclinRD/cursor-workflow.git /tmp/cursor-workflow
 cd YOUR_PROJECT
 cp -r /tmp/cursor-workflow/.cursor .
-brew install bun   # Stop Hook 需要
-cp .cursor/workflow-status.template.md .cursor/workflow-status.md
-./scripts/verify-install.sh   # 驗證安裝與 Hook 測試
+cp .cursor/workflow-state.template.json .cursor/workflow-state.json
+# Stop Hook：bun（推薦）或 node 擇一即可
+brew install bun   # 可選；無 bun 時用 node
+./scripts/verify-install.sh
 ```
 
 安裝後重載 Cursor 視窗，讓 `.cursor/rules` 生效。
@@ -33,11 +37,10 @@ git clone https://github.com/wclinRD/cursor-workflow.git /tmp/cursor-workflow
 cp -r /tmp/cursor-workflow/.cursor/rules/ ~/.cursor/rules/
 cp -r /tmp/cursor-workflow/.cursor/hooks/ ~/.cursor/hooks/
 cp -r /tmp/cursor-workflow/.cursor/commands/ ~/.cursor/commands/
-brew install bun   # Stop Hook 需要
 ```
 
-> 全域安裝不含 `workflow-status.md`（各專案狀態獨立）。在專案中執行：
-> `cp .cursor/workflow-status.template.md .cursor/workflow-status.md`
+> 全域安裝不含 runtime 狀態檔。在專案中執行：
+> `cp .cursor/workflow-state.template.json .cursor/workflow-state.json`
 
 ### 4. 更新既有專案
 
@@ -47,36 +50,42 @@ cd YOUR_PROJECT
 cp -r /tmp/cursor-workflow/.cursor/rules/ .cursor/rules/
 cp -r /tmp/cursor-workflow/.cursor/commands/ .cursor/commands/
 cp -r /tmp/cursor-workflow/.cursor/hooks/ .cursor/hooks/
-# workflow-status.md 若不存在才從 template 建立，避免覆蓋進行中任務
-test -f .cursor/workflow-status.md || cp /tmp/cursor-workflow/.cursor/workflow-status.template.md .cursor/workflow-status.md
+test -f .cursor/workflow-state.json || cp /tmp/cursor-workflow/.cursor/workflow-state.template.json .cursor/workflow-state.json
 ./scripts/verify-install.sh
 ```
 
 ### 5. 驗證與測試
 
 ```bash
-# 完整安裝驗證（bun、檔案、Hook 單元測試）
 ./scripts/verify-install.sh
-
-# 僅跑 Hook 測試
 bun test ./.cursor/hooks/check-progress.test.ts
 ```
 
 ### 6. 試用沙盒
 
-可 clone 本 repo 直接試用，或參考 [opencursor](https://github.com/wclinRD/opencursor) 試用專案。
+```bash
+git clone https://github.com/wclinRD/cursor-workflow.git
+cd cursor-workflow
+cp .cursor/workflow-state.template.json .cursor/workflow-state.json
+./scripts/verify-install.sh
+```
+
+或使用 [opencursor](https://github.com/wclinRD/opencursor) 試用專案。
 
 ---
 
 ## 與舊版差異
 
-| 項目 | 舊版 | 本版（Hybrid） |
-|------|------|----------------|
-| 工具 | 強制 Smart MCP | 日常 Cursor built-ins + Smart 選用 |
+| 項目 | 舊版 | 本版（Hybrid v2） |
+|------|------|-------------------|
+| 工具 | 強制 Smart MCP | Cursor built-ins + Smart 選用 |
 | 工作流 | 所有任務 6 階段 | 🟢 直接做 / 🟡 標準 / 🔴 完整迴圈 |
-| 任務追蹤 | scratchpad.md | **TodoWrite** + **workflow-status** |
-| TDD | 一律先寫測試 | 有測試框架且改行為時才要求 |
-| Stop Hook | 讀 scratchpad | 讀 `workflow-status.md`（含單元測試） |
+| 任務追蹤 | scratchpad.md | **workflow-state.json**（status + todos） |
+| TodoWrite | 強制 | 可選（建議與 JSON 同步） |
+| 🟢 單步 | 仍要 status | **可豁免** workflow-state |
+| Stop Hook | bun only | **bun 或 node**（`run-stop-hook.sh`） |
+| smart_think | 失敗即卡住 | **inline 降級** |
+| 品質規則 | alwaysApply | **按需載入**（02-quality） |
 
 ---
 
@@ -84,96 +93,80 @@ bun test ./.cursor/hooks/check-progress.test.ts
 
 ```
 .cursor/
-├── rules/                    smart-mcp, 00-complexity, 01-workflow-hybrid, 02-quality
-├── commands/                 think, plan, review, status
-├── hooks/                    Stop Hook + check-progress.test.ts
-├── workflow-status.template.md   版控範本（複製為 workflow-status.md 使用）
-├── workflow-status.md        runtime 狀態（.gitignore，不進版控）
-└── plans/                    /plan 產出的計畫存放處
+├── rules/                         smart-mcp, 00-complexity, 01-workflow-hybrid, 02-quality
+├── commands/                      think, plan, review, status
+├── hooks/
+│   ├── workflow-state.mjs         Stop Hook 核心（bun / node）
+│   ├── run-stop-hook.sh           bun → node fallback
+│   └── check-progress.test.ts
+├── workflow-state.template.json   版控範本
+├── workflow-state.json            runtime（.gitignore）
+├── workflow-status.template.md    舊版相容（已棄用）
+└── plans/                         /plan 產出
 scripts/
-└── verify-install.sh         安裝驗證 + Hook 測試
+└── verify-install.sh
 ```
 
 ---
 
-## 核心規則
+## workflow-state.json
 
-### TodoWrite（強制）
+```json
+{
+  "version": 1,
+  "status": "IN_PROGRESS",
+  "revision": "NEED_REVISION 時填寫",
+  "todos": [
+    { "id": "1", "content": "子任務", "status": "in_progress" }
+  ]
+}
+```
 
-| 類型 | TodoWrite |
-|------|-----------|
-| 純問答（無實作） | 可跳過 |
-| 🟢 有實作 | **必須**（至少 1 項） |
-| 🟡 / 🔴 | **必須**（實作前建立） |
-| `/plan` | **必須** |
-
-**不可**在沒有 TodoWrite 的情況下開始多步驟實作或改 code。
-
-### workflow-status（強制）
-
-| 類型 | workflow-status |
-|------|-----------------|
-| 純問答（無實作） | 維持 `IDLE` |
-| 🟢 / 🟡 / 🔴 有實作 | **必須**（開始 → `IN_PROGRESS`；完成 → `ALL_DONE`） |
-| `/plan`、`/think`（若後續要實作） | **必須** |
-
-**不可**在有實作步驟的任務中跳過 workflow-status 更新。可用 `/status` 指令更新。
-
-| 值 | 意義 |
-|----|------|
-| `IDLE` | 無進行中任務（預設） |
-| `IN_PROGRESS` | 實作進行中 |
-| `ALL_DONE` | 完成 |
-| `NEED_REVISION: …` | 需修正（Stop Hook 自動迭代，最多 3 輪） |
-| 無效值 | Stop Hook 會提示修正 |
-
-### smart_think
-
-| 複雜度 | 規則 |
+| status | 意義 |
 |--------|------|
-| 🟢 | 不用 |
-| 🟡 | 觸發條件命中時必須 |
-| 🔴 | THINK + REVIEW 必須 |
-| `/think` | 強制 |
+| `IDLE` | 無進行中任務 |
+| `IN_PROGRESS` | 實作中 |
+| `ALL_DONE` | 完成（todos 須全 completed） |
+| `NEED_REVISION` | 需修正 |
 
-🟡 觸發條件：需求模糊、跨 3+ 檔、根因不明、架構取捨、使用者要求、卡關。
+Stop Hook 同時驗證 **status + todos**（最多 3 輪自動迭代）。
 
-### 複雜度評分
+### 🟢 單步豁免
 
-```
-分數 = 步驟×2 + 工具×2 + 檔案×1 + 風險×3
-≤3 🟢 | 4-8 🟡 | >8 🔴
-```
+同時符合：**1 步、1 檔、低風險、🟢** → 可不寫 workflow-state.json。
+
+---
+
+## smart_think 降級
+
+MCP 不可用時，改 **inline 結構化分析**（目標、複雜度、步驟、風險），並註明降級。🟡🔴 仍須完成同等深度 THINK / REVIEW。
 
 ---
 
 ## 自訂指令
 
-| 指令 | TodoWrite | workflow-status | smart_think |
-|------|-----------|-----------------|-------------|
-| `/plan` | 必須 | 有實作則必須 | 🔴 必須 |
-| `/think` | 若後續實作則必須 | 有實作則必須 | 強制 |
-| `/review` | 檢查 completed | 有實作則必須 | 🔴 必須 |
-| `/status` | — | **寫入** | — |
+| 指令 | workflow-state | smart_think |
+|------|----------------|-------------|
+| `/plan` | 有實作則必須 | 🔴 必須（可降級） |
+| `/think` | 有實作則必須 | 強制（可降級） |
+| `/review` | 必須更新 | 🔴 必須（可降級） |
+| `/status` | **寫入 JSON** | — |
 
 ---
 
 ## 快速試用範例
 
-```bash
-# 純問答 — 無 TodoWrite，維持 IDLE
-解釋這個專案的 rules 結構
+```
+# 純問答 — 維持 IDLE
+解釋 rules 結構
 
-# 🟢 有實作 — TodoWrite + workflow-status 必須
-把某個函式改成回傳大寫
+# 🟢 單步豁免 — 可不寫 workflow-state
+修正 README  typo
 
-# 🟡 — TodoWrite + workflow-status + 條件式 smart_think
+# 🟡 — workflow-state.json + 條件式 smart_think
 /plan 新增模組與測試
 
-# 🔴 — TodoWrite + workflow-status + smart_think
-/plan 設計 plugin 載入器
-
-# 手動更新狀態
+# 手動更新
 /status IN_PROGRESS
 /status ALL_DONE
 ```

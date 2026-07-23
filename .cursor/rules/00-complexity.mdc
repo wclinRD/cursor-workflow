@@ -19,33 +19,33 @@ alwaysApply: true
 
 風險：低=1、中=2、高=3（認證、金流、schema 變更等）
 
-> TodoWrite、workflow-status、smart_think 詳細規則見 `01-workflow-hybrid.mdc`。
+> workflow-state、smart_think 詳細規則見 `01-workflow-hybrid.mdc`。
 
 ## 🟢 簡單（≤ 3 分）
 
-- 純問答：直接回答，跳過 TodoWrite，維持 `IDLE`
-- **有實作**：TodoWrite（1–2 項）→ `IN_PROGRESS` → 執行 → `ALL_DONE`
+- 純問答：直接回答，跳過追蹤，維持 `IDLE`
+- **🟢 單步豁免**（1 步、1 檔、低風險）：直接實作，**可不寫** workflow-state.json
+- **🟢 多步或有實作**：workflow-state.json → `IN_PROGRESS` → 執行 → `ALL_DONE`
 - 跳過 smart_think 與完整 REVIEW 迴圈
-- 用 Read / Grep / StrReplace 即可
-- 範例：改 typo、重命名、解釋一段 code
+- 範例：改 typo（單步豁免）、重命名單一符號（單步豁免）
 
 ## 🟡 中等（4-8 分）
 
-- **必須** TodoWrite + workflow-status（實作前建立 / 更新）
-- 標準流程：分析 → TodoWrite → `IN_PROGRESS` → 實作 → 驗證 → REVIEW → `ALL_DONE`
+- **必須** workflow-state.json（實作前建立 todos + status）
+- 標準流程：分析 → workflow-state → `IN_PROGRESS` → 實作 → 驗證 → REVIEW → `ALL_DONE`
 - 涉及新行為時遵循 TDD
 - smart_think：符合觸發條件時必須（見 `01-workflow-hybrid.mdc`）
 - 範例：新增 API、模組重構、跨 2-3 檔案的 bug
 
 ## 🔴 複雜（> 8 分）
 
-- **必須** smart_think THINK → TodoWrite → 實作 → smart_think REVIEW
-- **必須** workflow-status（Stop Hook 最多 3 輪迭代）
+- **必須** smart_think THINK → workflow-state → 實作 → smart_think REVIEW
+- **必須** workflow-state.json（Stop Hook 最多 3 輪迭代）
 - 完整 Hybrid 迴圈（見 `01-workflow-hybrid.mdc`）
 - 範例：大重構、多模組新功能、難以重現的 debug
 
 ## 動態調整
 
-- 執行中發現比預期簡單 → 可合併 TodoWrite 項，但**不可完全取消**（除非變純問答）
-- 執行中發現比預期複雜 → 升級，**補 TodoWrite 項** + smart_think + 🔴 流程
-- 純問答、讀 repo → 可跳過 TodoWrite 與 workflow-status（維持 `IDLE`）
+- 執行中發現比預期簡單 → 若符合 🟢 單步豁免可簡化；否則合併 todos
+- 執行中發現比預期複雜 → 升級，**補 todos** + smart_think + 🔴 流程
+- 純問答、讀 repo → 跳過 workflow-state（維持 `IDLE`）

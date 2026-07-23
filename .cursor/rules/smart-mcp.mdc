@@ -41,3 +41,13 @@ smart_run({ tool: "help", args: {} })
 ```
 
 If unsure which sub-tool: `smart_run({ tool: "hybrid_router", args: { question: "..." } })`.
+
+## smart_think 降級（MCP 不可用時）
+
+當 Smart MCP 未配置、needsAuth、或 `smart_think` / `smart_deep_think` 呼叫失敗時：
+
+1. **不要** 跳過 THINK / REVIEW 步驟
+2. 改在回覆中做 **inline 結構化分析**，模板：
+   - 目標、複雜度（🟢🟡🔴）、步驟列表、風險
+3. 註明「smart MCP 不可用，已 inline 降級」
+4. 🟡 / 🔴 任務仍須完成同等深度的分析與審查

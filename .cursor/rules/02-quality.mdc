@@ -1,6 +1,5 @@
 ---
-description: 交付前品質檢查（🟡🔴 任務完成時套用）
-alwaysApply: true
+description: 交付前品質檢查（🟡🔴 完成時、/review 時、實作驗證時套用）
 ---
 
 # 品質檢查
@@ -24,28 +23,27 @@ alwaysApply: true
 - [ ] 相關測試已執行且通過
 - [ ] 新行為有對應測試（若專案慣例要求 TDD）
 
-## workflow-status 檢查（強制）
+## workflow-state 檢查（強制，🟢 單步豁免除外）
 
-- [ ] 有實作步驟的任務：開始前已設 `IN_PROGRESS`？
-- [ ] 完成後已設 `ALL_DONE`？
-- [ ] 或明確 `NEED_REVISION: [原因]` 並說明修正方向
+- [ ] 有實作步驟：已寫入 `workflow-state.json` 且 status 正確？
+- [ ] 開始前 `IN_PROGRESS`、完成後 `ALL_DONE`？
+- [ ] todos 全部 `completed` 或合理 `cancelled`？
+- [ ] 或明確 `NEED_REVISION` + `revision` 原因
 
 ## smart_think 檢查
 
-- [ ] 🔴 任務：THINK 與 REVIEW 皆已呼叫 smart_think？
-- [ ] 🟡 任務：若命中觸發條件，已呼叫 smart_think？
-- [ ] `/think` 或使用者要求分析時，已呼叫 smart_think？
+- [ ] 🔴：THINK 與 REVIEW 皆已執行（smart_think 或 inline 降級）？
+- [ ] 🟡：若命中觸發條件，已執行？
+- [ ] `/think` 或使用者要求分析時，已結構化分析？
 
-## TodoWrite 檢查（強制）
+## TodoWrite 同步（有使用時）
 
-- [ ] 有實作步驟的任務：開始前已建立 TodoWrite？
-- [ ] 所有子任務已 `completed` 或合理 `cancelled`？
-- [ ] 無遺留 `in_progress` / `pending`？
-- [ ] 每完成一項都有 `merge: true` 更新？
+- [ ] TodoWrite 與 workflow-state.json 的 todos 一致？
+- [ ] 無遺留 `in_progress` / `pending`（除非任務仍在進行）？
 
 ## 常見問題
 
-- **跳過 TodoWrite 直接改** → 有實作步驟時**禁止**；先建 todo
-- **跳過 workflow-status** → 有實作步驟時**禁止**；先設 `IN_PROGRESS`
-- **迭代停不下來** → 確認 workflow-status 為 `ALL_DONE`；或已達 3 輪上限
-- **Todo 狀態不同步** → 每完成一項立即 `merge: true` 更新
+- **跳過 workflow-state 直接改** → 🟡🔴 **禁止**；🟢 單步豁免除外
+- **ALL_DONE 但 todos 未完成** → Stop Hook 會追問
+- **迭代停不下來** → 確認 status 為 `ALL_DONE` 且 todos 已完成；或已達 3 輪上限
+- **TodoWrite 與 JSON 不同步** → 以 workflow-state.json 為準，立即同步
